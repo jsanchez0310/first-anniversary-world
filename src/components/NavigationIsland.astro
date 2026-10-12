@@ -1,0 +1,235 @@
+---
+// Componente de HUD superior: Controles de Audio y Auto-Scroll con Barrita de Conteo
+---
+
+<!-- HUD Superior Derecho: Botones de Auto-Scroll y Sonido -->
+<div class="fixed top-6 right-6 z-50 pointer-events-auto flex items-center gap-2.5">
+  <!-- Boton de Auto-Scroll -->
+  <button 
+    id="autoscroll-toggle-btn" 
+    class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-black/50 hover:bg-black/75 border border-[#272727]/80 text-zinc-300 hover:text-[#d4af37] text-xs backdrop-blur-md transition-all duration-300 active:scale-95 shadow-xl cursor-pointer"
+    aria-label="Alternar Auto-Scroll"
+  >
+    <span class="flex items-center justify-center w-3 h-3 text-[#d4af37]">
+      <svg id="autoscroll-play-icon" class="w-3 h-3 text-[#d4af37]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+      </svg>
+    </span>
+    <span id="autoscroll-label" class="font-mono text-[10px] tracking-wider text-[#d4af37]">AUTO-SCROLL ON</span>
+  </button>
+
+  <!-- Boton de Sonido -->
+  <button 
+    id="sound-toggle-btn" 
+    class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-black/50 hover:bg-black/75 border border-[#272727]/80 text-zinc-300 hover:text-[#d4af37] text-xs backdrop-blur-md transition-all duration-300 active:scale-95 shadow-xl cursor-pointer"
+    aria-label="Alternar Sonido"
+  >
+    <span class="sound-wave-icon flex items-center gap-0.5 h-3">
+      <span class="wave-bar w-0.5 h-1.5 bg-[#d4af37] rounded-full playing"></span>
+      <span class="wave-bar w-0.5 h-3 bg-[#d4af37] rounded-full playing"></span>
+      <span class="wave-bar w-0.5 h-2 bg-[#d4af37] rounded-full playing"></span>
+    </span>
+    <span id="sound-label" class="font-mono text-[10px] tracking-wider text-[#d4af37]">SOUND ON</span>
+  </button>
+</div>
+
+<!-- Barrita visual arriba en el centro de toda la página para el contador de reanudación -->
+<div 
+  id="autoscroll-countdown-hud" 
+  class="autoscroll-countdown-container"
+>
+  <div class="autoscroll-pill">
+    <span class="autoscroll-glow-dot"></span>
+    <span class="autoscroll-pill-text">PAUSA • REANUDANDO AUTO-SCROLL</span>
+  </div>
+  <div class="autoscroll-track">
+    <div id="autoscroll-countdown-bar" class="autoscroll-bar-fill"></div>
+  </div>
+</div>
+
+<style>
+  .wave-bar.playing {
+    animation: soundPulse 1.2s infinite ease-in-out;
+  }
+  .wave-bar.playing:nth-child(2) {
+    animation-delay: 0.2s;
+  }
+  .wave-bar.playing:nth-child(3) {
+    animation-delay: 0.4s;
+  }
+
+  @keyframes soundPulse {
+    0%, 100% { transform: scaleY(0.4); }
+    50% { transform: scaleY(1.2); }
+  }
+
+  /* Barrita visual de conteo centrada en la parte superior */
+  .autoscroll-countdown-container {
+    position: fixed;
+    top: 1.5rem;
+    left: 50%;
+    transform: translate(-50%, -12px);
+    opacity: 0;
+    pointer-events: none;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.35rem;
+    transition: opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1), transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .autoscroll-countdown-container.is-visible {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+
+  .autoscroll-pill {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.3rem 0.85rem;
+    border-radius: 9999px;
+    background: rgba(10, 10, 12, 0.85);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(212, 175, 55, 0.4);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
+  }
+
+  .autoscroll-glow-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background-color: #d4af37;
+    box-shadow: 0 0 10px #d4af37;
+    animation: pingGlow 1.4s ease-in-out infinite;
+  }
+
+  @keyframes pingGlow {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(0.8); }
+  }
+
+  .autoscroll-pill-text {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: #fce7b0;
+    font-weight: 600;
+  }
+
+  .autoscroll-track {
+    width: 170px;
+    height: 4px;
+    border-radius: 9999px;
+    background: rgba(28, 28, 30, 0.95);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    overflow: hidden;
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.7);
+  }
+
+  .autoscroll-bar-fill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, #d4af37, #fde047);
+    border-radius: 9999px;
+    box-shadow: 0 0 10px rgba(212, 175, 55, 0.8);
+    transition: width 0.05s linear;
+  }
+</style>
+
+<script>
+  import { AudioController } from '../utils/AudioController';
+  import { AutoScrollController } from '../utils/AutoScrollController';
+
+  // 1. Control de Audio
+  const audio = AudioController.getInstance();
+  const soundToggleBtn = document.getElementById('sound-toggle-btn');
+  const soundLabel = document.getElementById('sound-label');
+  const waveBars = document.querySelectorAll('.wave-bar');
+
+  if (soundToggleBtn) {
+    soundToggleBtn.addEventListener('click', () => {
+      audio.unlock();
+      const isMuted = audio.toggleMute();
+      updateAudioUI(!isMuted);
+    });
+  }
+
+  audio.subscribe((state) => {
+    updateAudioUI(!state.isMuted);
+  });
+
+  function updateAudioUI(hasSound: boolean) {
+    if (soundLabel) {
+      soundLabel.textContent = hasSound ? 'SOUND ON' : 'MUTED';
+      soundLabel.className = `font-mono text-[10px] tracking-wider ${hasSound ? 'text-[#d4af37]' : 'text-zinc-500'}`;
+    }
+    waveBars.forEach((bar) => {
+      if (hasSound) {
+        bar.classList.add('playing');
+      } else {
+        bar.classList.remove('playing');
+      }
+    });
+  }
+
+  // 2. Control de Auto-Scroll y Barrita de Conteo
+  const autoscroll = AutoScrollController.getInstance();
+  const autoscrollToggleBtn = document.getElementById('autoscroll-toggle-btn');
+  const autoscrollLabel = document.getElementById('autoscroll-label');
+  const autoscrollPlayIcon = document.getElementById('autoscroll-play-icon');
+  const countdownHud = document.getElementById('autoscroll-countdown-hud');
+  const countdownBar = document.getElementById('autoscroll-countdown-bar');
+
+  if (autoscrollToggleBtn) {
+    autoscrollToggleBtn.addEventListener('click', () => {
+      const isEnabled = autoscroll.toggle();
+      updateAutoScrollUI(isEnabled);
+    });
+  }
+
+  autoscroll.subscribe((state) => {
+    updateAutoScrollUI(state.isEnabled);
+    if (!state.isPaused) {
+      hideCountdown();
+    }
+  });
+
+  autoscroll.subscribeCountdown((progress) => {
+    if (progress > 0 && progress < 1) {
+      showCountdown(progress);
+    } else {
+      hideCountdown();
+    }
+  });
+
+  function updateAutoScrollUI(isEnabled: boolean) {
+    if (autoscrollLabel) {
+      autoscrollLabel.textContent = isEnabled ? 'AUTO-SCROLL ON' : 'AUTO-SCROLL OFF';
+      autoscrollLabel.className = `font-mono text-[10px] tracking-wider ${isEnabled ? 'text-[#d4af37]' : 'text-zinc-500'}`;
+    }
+    if (autoscrollPlayIcon) {
+      autoscrollPlayIcon.setAttribute('class', `w-3 h-3 ${isEnabled ? 'text-[#d4af37]' : 'text-zinc-500'}`);
+    }
+  }
+
+  function showCountdown(progress: number) {
+    if (countdownHud) {
+      countdownHud.classList.add('is-visible');
+    }
+    if (countdownBar) {
+      countdownBar.style.width = `${Math.min(100, Math.max(0, progress * 100))}%`;
+    }
+  }
+
+  function hideCountdown() {
+    if (countdownHud) {
+      countdownHud.classList.remove('is-visible');
+    }
+    if (countdownBar) {
+      countdownBar.style.width = '0%';
+    }
+  }
+</script>
