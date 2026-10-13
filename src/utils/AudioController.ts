@@ -1,8 +1,8 @@
 /**
  * AudioController
  * Maneja la reproducción de música ambiental de fondo con transiciones (crossfade)
- * entre pistas por Acto o Mundo, y control de volumen / mute sincronizado.
- * Soporta registro de elementos de video para mutear/desmutear en conjunto.
+ * limpias y exclusivas entre pistas por Acto o Mundo, garantizando que NUNCA
+ * se superpongan múltiples pistas de audio.
  */
 export class AudioController {
   private static instance: AudioController | null = null;
@@ -14,20 +14,24 @@ export class AudioController {
   private fadeInterval: number | null = null;
   private listeners: Set<(state: { isMuted: boolean; isPlaying: boolean; track: string | null }) => void> = new Set();
   private registeredVideos: Set<HTMLVideoElement> = new Set();
+  private activeAudios: Set<HTMLAudioElement> = new Set();
+  private pendingTrackUrl: string | null = null;
 
   private constructor() {
     if (typeof document !== 'undefined') {
       document.addEventListener('visibilitychange', () => {
         if (document.hidden) {
-          if (this.currentAudio && !this.currentAudio.paused) {
-            this.currentAudio.volume = 0;
-          }
-          this.registeredVideos.forEach(v => { v.muted = true; });
+          this.activeAudios.forEach((a) => {
+            if (!a.paused) a.volume = 0;
+          });
+          this.registeredVideos.forEach((v) => { v.muted = true; });
         } else {
-          if (this.currentAudio && !this.currentAudio.paused && !this.isMuted) {
-            this.currentAudio.volume = this.volume;
+          if (!this.isMuted) {
+            if (this.currentAudio && !this.currentAudio.paused) {
+              this.currentAudio.volume = this.volume;
+            }
           }
-          this.registeredVideos.forEach(v => { v.muted = this.isMuted; });
+          this.registeredVideos.forEach((v) => { v.muted = this.isMuted; });
         }
       });
     }
@@ -56,7 +60,7 @@ export class AudioController {
   }
 
   private notify() {
-    const isPlaying = !this.isMuted;
+    const isPlaying = !this.isMuted && this.currentAudio !== null && !this.currentAudio.paused;
     for (const cb of this.listeners) {
       cb({ isMuted: this.isMuted, isPlaying, track: this.currentTrackUrl });
     }
@@ -64,104 +68,156 @@ export class AudioController {
 
   public unlock() {
     this.isUnlocked = true;
-    this.registeredVideos.forEach(v => {
+    this.registeredVideos.forEach((v) => {
       v.muted = this.isMuted;
+    });
+    if (this.pendingTrackUrl && !this.currentAudio) {
+      const pending = this.pendingTrackUrl;
+      this.pendingTrackUrl = null;
+      this.playTrack(pending);
+    }
+  }
+
+  // Detener y limpiar por completo un elemento de audio
+  private stopAndCleanAudio(audioEl: HTMLAudioElement | null) {
+    if (!audioEl) return;
+    try {
+      audioEl.pause();
+      audioEl.volume = 0;
+      audioEl.removeAttribute('src');
+      audioEl.load();
+    } catch (_e) {}
+    this.activeAudios.delete(audioEl);
+  }
+
+  // Detener todos los audios activos excepto uno opcional
+  private stopAllActiveAudiosExcept(except?: HTMLAudioElement | null) {
+    if (this.fadeInterval) {
+      clearInterval(this.fadeInterval);
+      this.fadeInterval = null;
+    }
+    this.activeAudios.forEach((a) => {
+      if (a !== except) {
+        this.stopAndCleanAudio(a);
+      }
     });
   }
 
   public async playTrack(trackUrl?: string, crossfadeDurationMs: number = 1800) {
-    if (!trackUrl || trackUrl === this.currentTrackUrl) return;
-    this.currentTrackUrl = trackUrl;
+    if (!trackUrl) return;
 
-    if (!this.isUnlocked) return;
+    // Si ya estamos reproduciendo exactamente esta pista, evitar duplicación
+    if (trackUrl === this.currentTrackUrl && this.currentAudio && !this.currentAudio.paused) {
+      return;
+    }
+
+    if (!this.isUnlocked) {
+      this.pendingTrackUrl = trackUrl;
+      return;
+    }
 
     try {
+      // Verificar si el archivo existe antes de alterar cualquier estado
       const check = await fetch(trackUrl, { method: 'HEAD' }).catch(() => null);
       if (!check || !check.ok) {
+        // El archivo no existe: no interrumpir la música actual ni sobreescribir currentTrackUrl
+        return;
+      }
+
+      // Verificación de carrera: ¿en lo que tardó el fetch ya se está reproduciendo?
+      if (trackUrl === this.currentTrackUrl && this.currentAudio && !this.currentAudio.paused) {
         return;
       }
 
       const incoming = new Audio(trackUrl);
       incoming.loop = true;
       incoming.volume = 0;
+      this.activeAudios.add(incoming);
 
       const playPromise = incoming.play();
       if (playPromise !== undefined) {
-        playPromise
-          .then(() => {
-            this.crossfade(incoming, crossfadeDurationMs);
-          })
-          .catch(() => {
-            if (this.currentAudio) {
-              this.fadeOutCurrent(1000);
-            }
-          });
+        await playPromise;
+        this.currentTrackUrl = trackUrl;
+        this.crossfade(incoming, crossfadeDurationMs);
       }
-    } catch (_e) {}
+    } catch (_e) {
+      // Si falla la reproducción de esta pista entrante, no romper la existente
+    }
   }
 
   private crossfade(incomingAudio: HTMLAudioElement, durationMs: number) {
+    // 1. Limpiar intervalo de fade anterior
     if (this.fadeInterval) {
       clearInterval(this.fadeInterval);
       this.fadeInterval = null;
     }
 
-    const steps = 30;
-    const stepTime = durationMs / steps;
-    const targetVolume = this.isMuted ? 0 : this.volume;
-    let step = 0;
-
+    // 2. Detener y silenciar de inmediato cualquier audio viejo que no sea el entrante ni el saliente
     const outgoing = this.currentAudio;
+    this.activeAudios.forEach((a) => {
+      if (a !== outgoing && a !== incomingAudio) {
+        this.stopAndCleanAudio(a);
+      }
+    });
+
     this.currentAudio = incomingAudio;
     this.notify();
+
+    if (!outgoing || outgoing === incomingAudio) {
+      const targetVol = this.isMuted ? 0 : this.volume;
+      incomingAudio.volume = targetVol;
+      return;
+    }
+
+    // 3. Fade cruzado suave asegurando pausa total de outgoing al final
+    const steps = 25;
+    const stepTime = Math.max(20, Math.round(durationMs / steps));
+    const targetVolume = this.isMuted ? 0 : this.volume;
+    const startOutgoingVol = outgoing.volume;
+    let step = 0;
 
     this.fadeInterval = window.setInterval(() => {
       step++;
       const progress = step / steps;
 
-      if (outgoing && !outgoing.paused) {
-        outgoing.volume = Math.max(0, targetVolume * (1 - progress));
+      if (!outgoing.paused) {
+        outgoing.volume = Math.max(0, startOutgoingVol * (1 - progress));
       }
-      if (this.currentAudio) {
-        this.currentAudio.volume = Math.min(targetVolume, targetVolume * progress);
+      if (incomingAudio && !incomingAudio.paused) {
+        incomingAudio.volume = Math.min(targetVolume, targetVolume * progress);
       }
 
       if (step >= steps) {
-        if (this.fadeInterval) clearInterval(this.fadeInterval);
-        this.fadeInterval = null;
-        if (outgoing) {
-          outgoing.pause();
-          outgoing.src = '';
+        if (this.fadeInterval) {
+          clearInterval(this.fadeInterval);
+          this.fadeInterval = null;
+        }
+        this.stopAndCleanAudio(outgoing);
+        if (incomingAudio && !incomingAudio.paused) {
+          incomingAudio.volume = targetVolume;
         }
       }
     }, stepTime);
   }
 
-  private fadeOutCurrent(durationMs: number) {
-    if (!this.currentAudio) return;
-    const outgoing = this.currentAudio;
-    const steps = 20;
-    const stepTime = durationMs / steps;
-    let step = 0;
-
-    const interval = window.setInterval(() => {
-      step++;
-      outgoing.volume = Math.max(0, outgoing.volume - outgoing.volume / steps);
-      if (step >= steps) {
-        clearInterval(interval);
-        outgoing.pause();
-      }
-    }, stepTime);
+  public stopAll() {
+    if (this.fadeInterval) {
+      clearInterval(this.fadeInterval);
+      this.fadeInterval = null;
+    }
+    this.stopAllActiveAudiosExcept(null);
     this.currentAudio = null;
+    this.currentTrackUrl = null;
     this.notify();
   }
 
   public toggleMute(): boolean {
     this.isMuted = !this.isMuted;
-    if (this.currentAudio) {
-      this.currentAudio.volume = this.isMuted ? 0 : this.volume;
-    }
-    this.registeredVideos.forEach(v => {
+    const targetVol = this.isMuted ? 0 : this.volume;
+    this.activeAudios.forEach((a) => {
+      a.volume = targetVol;
+    });
+    this.registeredVideos.forEach((v) => {
       v.muted = this.isMuted;
     });
     this.notify();

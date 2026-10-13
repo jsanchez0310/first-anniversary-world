@@ -73,9 +73,14 @@ export class ScrollWorldEngine {
 
   private async init() {
     this.setupDOM();
-    await this.loadClipsAsBlobs();
     this.setupListeners();
     this.update();
+    // Precarga de Blobs en memoria en background para scrubbing ultra-fluido
+    this.loadClipsAsBlobs().then(() => {
+      if (!this.isDestroyed) {
+        this.update();
+      }
+    });
   }
 
   private setupDOM() {
@@ -85,7 +90,7 @@ export class ScrollWorldEngine {
     stage.className = 'sw-stage absolute inset-0 w-full h-full overflow-hidden pointer-events-none z-0';
     stage.style.backgroundColor = 'transparent';
 
-    this.clips.forEach((_, idx) => {
+    this.clips.forEach((clipItem, idx) => {
       const video = document.createElement('video');
       video.className = `sw-video-segment absolute inset-0 w-full h-full object-cover transition-opacity duration-300 ease-out ${
         idx === 0 ? 'opacity-100 z-10' : 'opacity-0 z-0'
@@ -96,6 +101,11 @@ export class ScrollWorldEngine {
       video.setAttribute('muted', '');
       video.setAttribute('playsinline', '');
       video.setAttribute('aria-hidden', 'true');
+
+      // Asignar URL de destino inmediatamente para permitir streaming y metadatos sin demora
+      const targetUrl = (this.isMobileView && clipItem.urlMobile) ? clipItem.urlMobile : clipItem.url;
+      video.src = targetUrl;
+      video.load();
 
       // Coalescing de búsqueda por video
       this.isSeekingMap[idx] = false;
@@ -122,18 +132,19 @@ export class ScrollWorldEngine {
         const response = await fetch(targetUrl);
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         const blob = await response.blob();
+        if (this.isDestroyed) return;
         const blobUrl = URL.createObjectURL(blob);
         this.blobUrls.push(blobUrl);
 
         if (video) {
+          const currentTime = video.currentTime;
           video.src = blobUrl;
-          video.load();
+          if (!Number.isNaN(currentTime) && currentTime > 0) {
+            video.currentTime = currentTime;
+          }
         }
       } catch (_e) {
-        if (video) {
-          video.src = targetUrl;
-          video.load();
-        }
+        // En caso de fallo o conexión lenta, el video ya usa targetUrl asignado en setupDOM
       }
     });
 
@@ -244,8 +255,16 @@ export class ScrollWorldEngine {
             activeClipIndex = totalClips - 1;
             clipLocalProgress = 1;
           } else {
-            activeClipIndex = 0;
-            clipLocalProgress = 0;
+            // Si cae en un tramo entre clips o previo a uno nuevo, seleccionar el clip anterior más cercano
+            let prevIndex = 0;
+            for (let i = totalClips - 1; i >= 0; i--) {
+              if (rawProgress >= (this.clips[i].start ?? 0)) {
+                prevIndex = i;
+                break;
+              }
+            }
+            activeClipIndex = prevIndex;
+            clipLocalProgress = 1;
           }
         }
       } else {
@@ -289,6 +308,19 @@ export class ScrollWorldEngine {
     }
 
     this.onProgress?.(rawProgress, activeClipIndex, activeWorldIndex, worldProgress);
+  }
+
+  public reset() {
+    this.activeIndex = -1;
+    this.currentWorldIndex = -1;
+    this.videoElements.forEach((vid, idx) => {
+      vid.style.opacity = idx === 0 ? '1' : '0';
+      vid.style.zIndex = idx === 0 ? '10' : '0';
+      if (!Number.isNaN(vid.duration)) {
+        vid.currentTime = 0;
+      }
+    });
+    this.update();
   }
 
   public setTrackElement(el: HTMLElement) {

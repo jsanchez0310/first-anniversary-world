@@ -3,32 +3,47 @@ interface Props {
   quote: string;
   class?: string;
   worldIndex?: number;
-  alignment?: 'left' | 'right' | 'bottom';
+  alignment?: "left" | "right" | "bottom";
 }
 
-const { quote, class: className = '', worldIndex = 0, alignment = 'left' } = Astro.props;
-const isColumnLayout = alignment === 'left' || alignment === 'right';
+const {
+  quote,
+  class: className = "",
+  worldIndex = 0,
+  alignment = "left",
+} = Astro.props;
+const textOrientationMap = {
+  left: "text-left",
+  right: "text-right",
+  bottom: "text-center",
+};
+const isColumnLayout = alignment === "left" || alignment === "right";
 ---
 
-<div class={`text-reveal-container my-1.5 sm:my-2.5 w-full ${className}`} data-text-reveal>
-  <blockquote class={`font-normal leading-relaxed text-zinc-100/95 tracking-wide text-pretty select-none text-left drop-shadow-[0_2px_12px_rgba(0,0,0,0.95)] ${
-    isColumnLayout 
-      ? 'text-sm sm:text-[15px] md:text-[15px] lg:text-[16px] min-h-[5.5rem] sm:min-h-[7.5rem]' 
-      : 'text-sm sm:text-base md:text-lg lg:text-xl min-h-[4rem] sm:min-h-[5.5rem]'
-  }`}>
+<div
+  class={`text-reveal-container my-1.5 sm:my-2.5 w-full ${className}`}
+  data-text-reveal
+>
+  <blockquote
+    class={`${textOrientationMap[alignment] || 'text-left'} font-normal leading-relaxed text-zinc-100/95 tracking-wide select-none drop-shadow-[0_2px_12px_rgba(0,0,0,0.95)] ${
+      isColumnLayout
+        ? "text-sm sm:text-[15px] md:text-[15px] lg:text-[16px] min-h-[5.5rem] sm:min-h-[7.5rem]"
+        : "text-sm sm:text-base md:text-lg lg:text-xl min-h-[4rem] sm:min-h-[5.5rem]"
+    }`}
+  >
     <!-- Contenedor Typewriter limpio sin cursor -->
-    <span 
+    <span
       id={`typeit-quote-${worldIndex}`}
-      class="typeit-quote-element inline font-body"
+      class="typeit-quote-element drop-shadow-[0_2px_12px_rgba(0,0,0,0.95)] inline font-body"
       data-quote={quote}
-      data-world-idx={worldIndex}
-    ><span class="ti-text"></span></span>
+      data-world-idx={worldIndex}><span class="ti-text"></span></span
+    >
   </blockquote>
 </div>
 
 <style>
   .typeit-quote-element {
-    color: #f4f4f5;
-    text-shadow: 0 0 16px rgba(255, 235, 190, 0.25);
+    color: #fff;
+    text-shadow: 0 0 24px rgba(255, 255, 255, 0.3);
   }
 </style>

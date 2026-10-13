@@ -18,9 +18,9 @@ export interface StorySection {
   accent: string;
   /**
    * Alineación visual del mundo en pantalla:
-   * - 'left': Ocupa ~30% a la izquierda (por defecto) con narrativa y título abajo a la izquierda.
-   * - 'right': Ocupa ~30% a la derecha con narrativa y título abajo a la derecha.
-   * - 'bottom': Ocupa el ancho inferior centrado tradicional.
+   * - 'left': Narrativa y título abajo a la izquierda (~30%). Botón "Siguiente Mundo" abajo a la derecha de la pantalla.
+   * - 'right': Narrativa y título abajo a la derecha (~30%). Botón "Siguiente Mundo" abajo a la izquierda de la pantalla.
+   * - 'bottom': Narrativa y título centrados abajo. Botón "Siguiente Mundo" dentro debajo del texto.
    * Nota: El indicador del Acto siempre se mantiene arriba a la izquierda sin importar esta opción.
    */
   alignment?: StoryAlignment;
@@ -81,7 +81,7 @@ export const STORY_SECTIONS: StorySection[] = [
     accent: '#d4af37',
     alignment: 'left',
     linger: 0.45,
-    scroll: 2.2
+    scroll: 4
   },
   {
     id: 'world-2',
@@ -93,13 +93,15 @@ export const STORY_SECTIONS: StorySection[] = [
     inspiration: 'Elden Ring, Orgullo y Prejuicio y la noche bajo las estrellas',
     quote: 'Y cuando el mundo parecia desmoronarse en nuestros primeros pasos tambaleantes, el destino nos tendio una trampa de estrellas. En una terraza bajo el cielo de Medellin, sin mas testigos que la noche y la ciudad brillando a nuestros pies, supe que tu piel y la mia hablaban el mismo idioma milenario. Esta es nuestra fortaleza: un fuego indomable, una pasion feroz que desafia cualquier tormenta y nos vuelve invencibles.',
     clips: [
-      // Modular: cuando existan world_2_1.mp4, etc. se anaden aqui
+      '/world_2_1.mp4',
+      '/world_2_2.mp4'
     ],
+    clipMobile: '/world_2_2.mp4',
     audioTrack: '/audio/world_2.mp3',
     accent: '#e26d5c',
-    alignment: 'left',
+    alignment: 'right',
     linger: 0.45,
-    scroll: 1.8
+    scroll: 4
   },
   {
     id: 'world-3',
@@ -109,7 +111,7 @@ export const STORY_SECTIONS: StorySection[] = [
     worldNumber: 3,
     title: 'Mundo 3: El Puente de los Cempasuchiles y Cometas',
     inspiration: 'Coco, Your Name y el duelo por Luna y el abuelo',
-    quote: 'Lo esencial es invisible a los ojos. Las almas que amamos nunca se van; cruzan un puente de luz y petalos encendidos para convertirse en nuestra constelacion guia. Aqui habitan las lagrimas que sanaron la tierra: el eco eterno de tu abuelo, nuestro San Miguel Arcangel, y el latido en el viento de nuestra querida Luna, cuya huella vive en cada estrella que hoy ilumina nuestra historia.',
+    quote: 'Lo esencial es invisible a los ojos. Las almas que amamos nunca se van; cruzan un puente de luz y petalos encendidos para convertirse en nuestra constelacion guia. Aqui habitan las lagrimas que sanaron la tierra: el eco eterno de tu abuelo, tu San Miguel Arcangel, y el latido en el viento de nuestra querida Luna, cuya huella vive en cada estrella que hoy ilumina nuestra historia.',
     clips: [],
     audioTrack: '/audio/world_3.mp3',
     accent: '#f39c12',

@@ -21,16 +21,20 @@ export type CountdownListener = (progress: number, remainingMs: number) => void;
 export class AutoScrollController {
   private static instance: AutoScrollController | null = null;
 
-  private speed: number = 1.65; // Pixeles por fotograma (~90-100 px/s, ritmo fluido y natural)
-  private pauseDuration: number = 3200; // Milisegundos de espera tras interacción manual
+  // Velocidad constante en píxeles por segundo (ritmo sereno y poético para lectura humana en 60Hz, 120Hz o 144Hz)
+  private speedPxPerSecond: number = 42; 
+  private pauseDuration: number = 3200; // Milisegundos de espera tras interacción manual antes de reanudar
   private isEnabled: boolean = true;
   private isJourneyActive: boolean = false;
   private isPausedByUser: boolean = false;
-  private isProgrammaticScroll: boolean = false;
+  private isWaitingForWorldCTA: boolean = false;
+  private isOrientationLocked: boolean = false;
 
   private rafId: number | null = null;
   private countdownRafId: number | null = null;
   private pauseStartTime: number = 0;
+  private lastLoopTime: number = 0;
+  private scrollSubpixelAccumulator: number = 0;
 
   private stateListeners: Set<StateListener> = new Set();
   private countdownListeners: Set<CountdownListener> = new Set();
@@ -50,11 +54,11 @@ export class AutoScrollController {
 
   private setupUserInteractionListeners() {
     const handleUserInteraction = () => {
-      if (!this.isJourneyActive || !this.isEnabled) return;
+      if (!this.isJourneyActive || !this.isEnabled || this.isWaitingForWorldCTA) return;
       this.pauseAndStartCountdown();
     };
 
-    // 1. Rueda del ratón / touchpad
+    // 1. Rueda del ratón / touchpad de dos dedos (entrada física real)
     window.addEventListener('wheel', handleUserInteraction, { passive: true });
 
     // 2. Desplazamiento táctil en dispositivos móviles
@@ -62,21 +66,12 @@ export class AutoScrollController {
     window.addEventListener('touchstart', (e) => {
       const target = e.target as HTMLElement | null;
       if (target?.closest('button') || target?.closest('a')) return;
-      if (this.isJourneyActive && this.isEnabled) {
+      if (this.isJourneyActive && this.isEnabled && !this.isWaitingForWorldCTA) {
         this.pauseAndStartCountdown();
       }
     }, { passive: true });
 
-    // 3. Evento nativo de scroll (cubre arrastre de barra de scroll, inercia, etc.)
-    window.addEventListener('scroll', () => {
-      // Ignorar si el desplazamiento fue generado por nuestro propio motor de auto-scroll
-      if (this.isProgrammaticScroll) return;
-      if (this.isJourneyActive && this.isEnabled) {
-        handleUserInteraction();
-      }
-    }, { passive: true });
-
-    // 4. Teclas de navegación
+    // 3. Teclas de navegación
     window.addEventListener('keydown', (e) => {
       const scrollKeys = ['ArrowDown', 'ArrowUp', 'PageDown', 'PageUp', 'Space', 'Home', 'End'];
       if (scrollKeys.includes(e.code) || scrollKeys.includes(e.key)) {
@@ -106,12 +101,12 @@ export class AutoScrollController {
       if (progress < 1) {
         this.countdownRafId = requestAnimationFrame(tickCountdown);
       } else {
-        // Fin de la espera: reanudar auto-scroll
+        // Fin de la espera: reanudar auto-scroll suavemente
         this.stopCountdown();
         this.isPausedByUser = false;
         this.notifyCountdown(1, 0);
         this.notifyState();
-        if (this.isEnabled && this.isJourneyActive) {
+        if (this.isEnabled && this.isJourneyActive && !this.isWaitingForWorldCTA) {
           this.startScrollLoop();
         }
       }
@@ -122,11 +117,22 @@ export class AutoScrollController {
 
   private startScrollLoop() {
     this.stopScrollLoop();
+    this.lastLoopTime = performance.now();
+    this.scrollSubpixelAccumulator = 0;
 
-    const loop = () => {
-      if (!this.isEnabled || !this.isJourneyActive || this.isPausedByUser) {
+    const loop = (now: number) => {
+      if (!this.isEnabled || !this.isJourneyActive || this.isPausedByUser || this.isWaitingForWorldCTA || this.isOrientationLocked) {
+        this.lastLoopTime = 0;
         return;
       }
+
+      if (this.lastLoopTime === 0) {
+        this.lastLoopTime = now;
+      }
+
+      // Delta time en segundos acotado a un máximo de 60ms para evitar saltos si hay lag
+      const deltaSec = Math.min(0.06, (now - this.lastLoopTime) / 1000);
+      this.lastLoopTime = now;
 
       const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
       // Solo detener si la página tiene altura de scroll real (> 500px) y llegamos al final del epílogo
@@ -135,14 +141,15 @@ export class AutoScrollController {
         return;
       }
 
-      // Marcar como scroll programático para que el listener de scroll no pause el proceso
-      this.isProgrammaticScroll = true;
-      window.scrollBy({ top: this.speed, behavior: 'instant' });
+      // Acumular subpíxeles para una velocidad matemáticamente constante e independiente de los Hz del monitor
+      const pixelsToMove = this.speedPxPerSecond * deltaSec;
+      this.scrollSubpixelAccumulator += pixelsToMove;
 
-      // Liberar la bandera en el próximo ciclo
-      requestAnimationFrame(() => {
-        this.isProgrammaticScroll = false;
-      });
+      if (this.scrollSubpixelAccumulator >= 1) {
+        const intPixels = Math.floor(this.scrollSubpixelAccumulator);
+        this.scrollSubpixelAccumulator -= intPixels;
+        window.scrollBy({ top: intPixels, behavior: 'instant' });
+      }
 
       this.rafId = requestAnimationFrame(loop);
     };
@@ -156,12 +163,61 @@ export class AutoScrollController {
       cancelAnimationFrame(this.rafId);
       this.rafId = null;
     }
+    this.lastLoopTime = 0;
+    this.scrollSubpixelAccumulator = 0;
   }
 
   private stopCountdown() {
     if (this.countdownRafId) {
       cancelAnimationFrame(this.countdownRafId);
       this.countdownRafId = null;
+    }
+  }
+
+  // Pausar auto-scroll específicamente esperando el clic en "Siguiente Mundo"
+  public pauseForWorldCTA() {
+    this.isWaitingForWorldCTA = true;
+    this.stopScrollLoop();
+    this.stopCountdown();
+    this.notifyCountdown(0, 0);
+    this.notifyState();
+  }
+
+  // Liberar la espera del CTA si el usuario hace scroll hacia atrás dentro del mundo
+  public clearWorldCTAPause() {
+    if (this.isWaitingForWorldCTA) {
+      this.isWaitingForWorldCTA = false;
+      this.notifyState();
+      if (this.isEnabled && this.isJourneyActive && !this.isPausedByUser) {
+        this.startScrollLoop();
+      }
+    }
+  }
+
+  // Reanudar tras hacer clic en "Siguiente Mundo"
+  public resumeAfterWorldCTA() {
+    this.isWaitingForWorldCTA = false;
+    this.isPausedByUser = false;
+    this.stopCountdown();
+    this.notifyCountdown(0, 0);
+    if (this.isEnabled && this.isJourneyActive) {
+      this.startScrollLoop();
+    }
+    this.notifyState();
+  }
+
+  // Pausar o reanudar según el bloqueo de orientación de pantalla
+  public setOrientationLocked(locked: boolean) {
+    this.isOrientationLocked = locked;
+    if (locked) {
+      this.stopScrollLoop();
+      this.stopCountdown();
+      this.notifyState();
+    } else {
+      this.notifyState();
+      if (this.isEnabled && this.isJourneyActive && !this.isPausedByUser && !this.isWaitingForWorldCTA) {
+        this.startScrollLoop();
+      }
     }
   }
 
@@ -174,8 +230,9 @@ export class AutoScrollController {
       this.isPausedByUser = false;
       this.notifyCountdown(0, 0);
     } else {
+      this.isWaitingForWorldCTA = false;
+      this.isPausedByUser = false;
       if (this.isJourneyActive) {
-        this.isPausedByUser = false;
         this.startScrollLoop();
       }
     }
@@ -187,6 +244,7 @@ export class AutoScrollController {
   public startJourney() {
     this.isJourneyActive = true;
     this.isPausedByUser = false;
+    this.isWaitingForWorldCTA = false;
     this.stopCountdown();
     this.notifyCountdown(0, 0);
 
@@ -200,6 +258,7 @@ export class AutoScrollController {
   public stop() {
     this.isJourneyActive = false;
     this.isPausedByUser = false;
+    this.isWaitingForWorldCTA = false;
     this.stopScrollLoop();
     this.stopCountdown();
     this.notifyCountdown(0, 0);

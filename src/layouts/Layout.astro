@@ -3,6 +3,7 @@ import '@fontsource/princess-sofia';
 import '@fontsource/henny-penny';
 import '@fontsource/geist-mono';
 import '../styles/global.css';
+import OrientationLock from '../components/OrientationLock.astro';
 
 interface Props {
 	title?: string;
@@ -29,6 +30,8 @@ const { title = 'Primer Aniversario' } = Astro.props;
 		<script is:inline src="/vendor/typeit.umd.js"></script>
 	</head>
 	<body class="bg-black text-zinc-100 overflow-x-hidden">
+		<!-- Bloqueo cinematográfico de orientación en móviles -->
+		<OrientationLock />
 		<!-- Capa global del filtro de grano fino de cine (Film Grain animado) -->
 		<div class="film-grain" aria-hidden="true"></div>
 		<!-- Viñeta cinematográfica de bordes oscuros (Lens Vignette) -->

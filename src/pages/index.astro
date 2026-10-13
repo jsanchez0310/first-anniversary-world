@@ -44,7 +44,7 @@ import { STORY_SECTIONS } from '../config/story';
     <div 
       id="scroll-story-track" 
       class="relative z-10 w-full pointer-events-none hidden" 
-      style="height: 800vh;"
+      style="height: 900vh;"
     ></div>
 
     <!-- Escenario Narrativo Fijo en Pantalla Completa (Configurable por mundo: left [30%], right [30%] o bottom; Acto siempre arriba a la izquierda) -->
@@ -63,13 +63,13 @@ import { STORY_SECTIONS } from '../config/story';
           >
             <!-- Fondos de gradiente cinematográfico (solo en el texto de abajo y en diagonal) -->
             {align === 'left' && (
-              <div class="absolute bottom-0 left-0 w-full sm:w-[70%] md:w-[50%] lg:w-[40%] h-[55vh] max-h-[460px] bg-gradient-to-tr from-black/95 via-black/50 to-transparent pointer-events-none -z-10"></div>
+              <div class="absolute bottom-0 left-0 w-full sm:w-[70%] md:w-[50%] lg:w-[40%] h-[55vh] max-h-[460px]  pointer-events-none -z-10"></div>
             )}
             {align === 'right' && (
-              <div class="absolute bottom-0 right-0 w-full sm:w-[70%] md:w-[50%] lg:w-[40%] h-[55vh] max-h-[460px] bg-gradient-to-tl from-black/95 via-black/50 to-transparent pointer-events-none -z-10"></div>
+              <div class="absolute bottom-0 right-0 w-full sm:w-[70%] md:w-[50%] lg:w-[40%] h-[55vh] max-h-[460px] pointer-events-none -z-10"></div>
             )}
             {align === 'bottom' && (
-              <div class="absolute inset-x-0 bottom-0 h-56 sm:h-64 bg-gradient-to-t from-black/95 via-black/60 to-transparent pointer-events-none -z-10"></div>
+              <div class="absolute inset-x-0 bottom-0 h-56 sm:h-64 pointer-events-none -z-10"></div>
             )}
 
             <!-- TOP: Línea de Acto (SIEMPRE ARRIBA A LA IZQUIERDA, SIN PILL, TAL CUAL ESTABA) -->
@@ -86,9 +86,9 @@ import { STORY_SECTIONS } from '../config/story';
             <!-- BOTTOM: Título del Mundo y Revelado de Narrativa -->
             <div class={`relative z-10 flex flex-col items-start text-left pb-2 sm:pb-4 ${
               align === 'left' 
-                ? 'w-full sm:w-[85%] md:w-[35%] lg:w-[30%] max-w-xl self-start' 
+                ? 'w-full sm:w-[85%] md:w-[35%] lg:w-[30%] max-w-xl self-start max-sm:pb-16' 
                 : align === 'right'
-                ? 'w-full sm:w-[85%] md:w-[35%] lg:w-[30%] max-w-xl self-end ml-auto'
+                ? 'w-full sm:w-[85%] md:w-[35%] lg:w-[30%] max-w-xl self-end ml-auto max-sm:pb-16'
                 : 'w-full max-w-5xl mx-auto self-center'
             }`}>
               <!-- Título del Mundo -->
@@ -109,7 +109,47 @@ import { STORY_SECTIONS } from '../config/story';
                   <span>Paisaje en creacion: nuevos clips conectaran este horizonte al agregarse en /public.</span>
                 </p>
               )}
+
+              {/* Botón dentro debajo del texto cuando alignment === 'bottom' */}
+              {idx < STORY_SECTIONS.length - 1 && align === 'bottom' && (
+                <div class="mt-3.5 sm:mt-5 w-full flex items-center">
+                  <button
+                    id={`btn-next-world-${idx}`}
+                    class="btn-next-world group inline-flex items-center gap-2.5 px-5 py-2.5 rounded-full bg-black/70 hover:bg-[#1f1b13] border border-[#d4af37]/60 hover:border-[#d4af37] text-amber-100 hover:text-white font-mono text-xs tracking-wider uppercase backdrop-blur-md transition-all duration-500 hover:scale-[1.03] active:scale-[0.98] cursor-pointer shadow-[0_4px_24px_rgba(212,175,55,0.25)] opacity-0 pointer-events-none translate-y-3"
+                    data-world-index={idx}
+                    aria-label={`Avanzar al siguiente mundo`}
+                  >
+                    <span class="w-2 h-2 rounded-full bg-[#d4af37] animate-ping"></span>
+                    <span>Siguiente Mundo</span>
+                    <svg class="w-3.5 h-3.5 text-[#d4af37] transition-transform duration-300 group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                    </svg>
+                  </button>
+                </div>
+              )}
             </div>
+
+            {/* Botón al extremo opuesto de la pantalla cuando alignment !== 'bottom' (left -> abajo a la derecha, right -> abajo a la izquierda) */}
+            {idx < STORY_SECTIONS.length - 1 && align !== 'bottom' && (
+              <div class={`absolute bottom-8 sm:bottom-12 z-20 pointer-events-none ${
+                align === 'left' 
+                  ? 'right-6 sm:right-12 md:right-16' 
+                  : 'left-6 sm:left-12 md:left-16'
+              }`}>
+                <button
+                  id={`btn-next-world-${idx}`}
+                  class="btn-next-world group inline-flex items-center gap-2.5 px-5 py-2.5 rounded-full bg-black/70 hover:bg-[#1f1b13] border border-[#d4af37]/60 hover:border-[#d4af37] text-amber-100 hover:text-white font-mono text-xs tracking-wider uppercase backdrop-blur-md transition-all duration-500 hover:scale-[1.03] active:scale-[0.98] cursor-pointer shadow-[0_4px_24px_rgba(212,175,55,0.25)] opacity-0 pointer-events-none translate-y-3"
+                  data-world-index={idx}
+                  aria-label={`Avanzar al siguiente mundo`}
+                >
+                  <span class="w-2 h-2 rounded-full bg-[#d4af37] animate-ping"></span>
+                  <span>Siguiente Mundo</span>
+                  <svg class="w-3.5 h-3.5 text-[#d4af37] transition-transform duration-300 group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                  </svg>
+                </button>
+              </div>
+            )}
           </div>
         );
       })}
@@ -160,6 +200,20 @@ import { STORY_SECTIONS } from '../config/story';
   let isIntroTransitionActive = false;
   let worldEngine: ScrollWorldEngine | null = null;
   let currentActiveWorldIndex = 0;
+  let unlockedWorldIndex = 0;
+
+  function getMaxStoryScroll(): number {
+    if (!storyTrack) return 1;
+    return Math.max(1, storyTrack.getBoundingClientRect().height - window.innerHeight);
+  }
+
+  // Punto de parada contemplativa para cada mundo (al 94% del tramo, dentro del mundo actual)
+  function getWorldStopProgress(worldIdx: number): number {
+    const span = worldSpans[worldIdx];
+    if (!span) return 1;
+    const spanDuration = span.end - span.start;
+    return span.start + spanDuration * 0.94;
+  }
 
   // 1. Bloquear el scroll inicialmente para que solo se vea el video loop del libro
   document.body.style.overflow = 'hidden';
@@ -192,11 +246,11 @@ import { STORY_SECTIONS } from '../config/story';
 
   // Distribución de tramos para cada mundo en la pista de scroll (0 a 1)
   const worldSpans = [
-    { worldIndex: 0, start: 0.00, end: 0.36 },
-    { worldIndex: 1, start: 0.36, end: 0.52 },
-    { worldIndex: 2, start: 0.52, end: 0.68 },
-    { worldIndex: 3, start: 0.68, end: 0.84 },
-    { worldIndex: 4, start: 0.84, end: 1.00 },
+    { worldIndex: 0, start: 0.00, end: 0.34 },
+    { worldIndex: 1, start: 0.34, end: 0.60 }, // 26% del scroll total para un recorrido cinematográfico y pausado de Medellín
+    { worldIndex: 2, start: 0.60, end: 0.74 },
+    { worldIndex: 3, start: 0.74, end: 0.88 },
+    { worldIndex: 4, start: 0.88, end: 1.00 },
   ];
 
   // Actualizar el efecto typewriter en sincronía bidireccional continua con el scroll (adelante y atrás)
@@ -229,12 +283,12 @@ import { STORY_SECTIONS } from '../config/story';
   }
 
   // Actualizar qué mundo se muestra en la parte baja de la pantalla
-  function updateActiveWorld(worldIdx: number) {
+  function updateActiveWorld(worldIdx: number, playAudio: boolean = true) {
     currentActiveWorldIndex = worldIdx;
 
     // Cambiar audio ambiental suavemente
     const targetSection = STORY_SECTIONS[worldIdx];
-    if (targetSection && targetSection.audioTrack) {
+    if (playAudio && targetSection && targetSection.audioTrack) {
       audio.playTrack(targetSection.audioTrack, 1600);
     }
 
@@ -284,24 +338,72 @@ import { STORY_SECTIONS } from '../config/story';
     // Sincronizar tipeo y borrado de caracteres según el scroll exacto (adelante y atrás)
     if (isIntroTransitionActive) {
       updateTypewriterProgress(activeWorldIdx, worldProgress);
+
+      // Gestión de la barrera de detención por mundo y revelado del CTA "Siguiente Mundo"
+      if (unlockedWorldIndex < STORY_SECTIONS.length - 1) {
+        const stopProgress = getWorldStopProgress(unlockedWorldIndex);
+        const maxScroll = getMaxStoryScroll();
+        const maxAllowedScrollY = Math.round(stopProgress * maxScroll);
+        const currentBtn = document.getElementById(`btn-next-world-${unlockedWorldIndex}`) as HTMLElement | null;
+
+        // Mostrar botón cuando el mundo actual esté concluyendo su narrativa (>= 78%)
+        if (activeWorldIdx === unlockedWorldIndex && worldProgress >= 0.78) {
+          if (currentBtn) {
+            currentBtn.style.opacity = '1';
+            currentBtn.style.pointerEvents = 'auto';
+            currentBtn.style.transform = 'translateY(0)';
+          }
+        } else if (activeWorldIdx === unlockedWorldIndex && worldProgress < 0.72) {
+          if (currentBtn) {
+            currentBtn.style.opacity = '0';
+            currentBtn.style.pointerEvents = 'none';
+            currentBtn.style.transform = 'translateY(12px)';
+          }
+        }
+
+        // Si el usuario retrocede con el scroll antes del punto de parada, liberar la pausa del CTA
+        if (window.scrollY < maxAllowedScrollY - 25) {
+          autoscroll.clearWorldCTAPause();
+        }
+
+        // Si el desplazamiento alcanza el punto de parada del mundo actual, detener auto-scroll y asegurar tope
+        if (window.scrollY >= maxAllowedScrollY) {
+          autoscroll.pauseForWorldCTA();
+          if (window.scrollY > maxAllowedScrollY) {
+            window.scrollTo({ top: maxAllowedScrollY, behavior: 'instant' });
+          }
+        }
+      }
     }
   }
 
   // Inicializar clips para el scrub engine (pre-carga en memoria Blobs)
   if (worldClipsContainer && storyTrack) {
     const clipItems: Array<{ id: string; url: string; urlMobile?: string; linger?: number; start?: number; end?: number }> = [];
-    const w1Clips = STORY_SECTIONS[0].clips;
-    const clipSlice = 0.36 / (w1Clips.length || 1);
 
-    w1Clips.forEach((clipUrl, cIdx) => {
-      clipItems.push({
-        id: `world-1-clip-${cIdx}`,
-        url: clipUrl,
-        urlMobile: STORY_SECTIONS[0].clipMobile,
-        linger: STORY_SECTIONS[0].linger ?? 0.45,
-        start: cIdx * clipSlice,
-        end: (cIdx + 1) * clipSlice,
-      });
+    STORY_SECTIONS.forEach((sec, sIdx) => {
+      const span = worldSpans.find((w) => w.worldIndex === sIdx) || {
+        start: sIdx / STORY_SECTIONS.length,
+        end: (sIdx + 1) / STORY_SECTIONS.length,
+      };
+      const spanDuration = span.end - span.start;
+      const clips = sec.clips || [];
+
+      if (clips.length > 0) {
+        // Los clips concluyen al 90% del tramo para que en el punto de parada (94%) el video se mantenga sereno en su frame culminante
+        const clipsSpanDuration = spanDuration * 0.90;
+        const clipSlice = clipsSpanDuration / clips.length;
+        clips.forEach((clipUrl, cIdx) => {
+          clipItems.push({
+            id: `world-${sec.worldNumber}-clip-${cIdx}`,
+            url: clipUrl,
+            urlMobile: sec.clipMobile,
+            linger: sec.linger ?? 0.45,
+            start: span.start + cIdx * clipSlice,
+            end: span.start + (cIdx + 1) * clipSlice,
+          });
+        });
+      }
     });
 
     worldEngine = new ScrollWorldEngine({
@@ -359,46 +461,27 @@ import { STORY_SECTIONS } from '../config/story';
 
       // Fade out suave del audio del video introductorio en sus ultimos segundos
       let isAudioFadingOut = false;
+      let hasEndedTriggered = false;
       const audioFadeDurationSec = 1.2; // 1200ms de fade out antes de terminar
-      const onTimeUpdate = () => {
-        if (!videoIntroStart.duration || isAudioFadingOut) return;
-        const timeLeft = videoIntroStart.duration - videoIntroStart.currentTime;
-        if (timeLeft <= audioFadeDurationSec && timeLeft > 0) {
-          isAudioFadingOut = true;
-          // Iniciar fade out progresivo del volumen
-          const startVol = videoIntroStart.volume;
-          const fadeStartTime = performance.now();
-          const fadeMs = timeLeft * 1000;
 
-          const stepFade = (now: number) => {
-            const elapsed = now - fadeStartTime;
-            const progress = Math.min(1, elapsed / fadeMs);
-            videoIntroStart.volume = Math.max(0, startVol * (1 - progress));
-            if (progress < 1 && !videoIntroStart.paused) {
-              requestAnimationFrame(stepFade);
-            }
-          };
-          requestAnimationFrame(stepFade);
-        }
-      };
-      videoIntroStart.addEventListener('timeupdate', onTimeUpdate);
+      const handleIntroEnd = () => {
+        if (hasEndedTriggered) return;
+        hasEndedTriggered = true;
 
-      // Cuando termine el video de transición, transición suave hacia los mundos
-      videoIntroStart.onended = () => {
         videoIntroStart.removeEventListener('timeupdate', onTimeUpdate);
+        videoIntroStart.pause();
+        // IMPORTANTE: NO reiniciar currentTime = 0 aquí para que el video permanezca
+        // pausado en su fotograma final mientras se realiza el crossfade con los clips del mundo.
 
-        // 1. Mostrar los clips del mundo y activar primer mundo
+        // 1. Mostrar los clips del mundo y activar primer mundo (inicia su audio)
         worldClipsContainer.style.zIndex = '20';
         worldClipsContainer.style.opacity = '1';
         updateActiveWorld(0);
 
-        // 2. Iniciar música ambiental de fondo del acto 1 con crossfade cinematográfico
-        audio.playTrack('/audio/act_1.mp3', 2000);
-
-        // 3. Desvanecer el video de intro suavemente con su transición CSS de 1000ms
+        // 2. Desvanecer el video de intro suavemente con su transición CSS de 1000ms
         videoIntroStart.style.opacity = '0';
 
-        // 4. Habilitar la pista de scroll, el overlay narrativo inferior y el epílogo
+        // 3. Habilitar la pista de scroll, el overlay narrativo inferior y el epílogo
         storyTrack.classList.remove('hidden');
         if (cinemaBottomOverlay) {
           cinemaBottomOverlay.style.opacity = '1';
@@ -425,6 +508,39 @@ import { STORY_SECTIONS } from '../config/story';
           autoscroll.startJourney();
         }, 1200);
       };
+
+      const onTimeUpdate = () => {
+        if (!videoIntroStart.duration || hasEndedTriggered) return;
+        const timeLeft = videoIntroStart.duration - videoIntroStart.currentTime;
+
+        // Asegurar la captura del final si el navegador llega al último tramo
+        if (timeLeft <= 0.04) {
+          handleIntroEnd();
+          return;
+        }
+
+        if (timeLeft <= audioFadeDurationSec && timeLeft > 0 && !isAudioFadingOut) {
+          isAudioFadingOut = true;
+          // Iniciar fade out progresivo del volumen
+          const startVol = videoIntroStart.volume;
+          const fadeStartTime = performance.now();
+          const fadeMs = timeLeft * 1000;
+
+          const stepFade = (now: number) => {
+            const elapsed = now - fadeStartTime;
+            const progress = Math.min(1, elapsed / fadeMs);
+            videoIntroStart.volume = Math.max(0, startVol * (1 - progress));
+            if (progress < 1 && !videoIntroStart.paused) {
+              requestAnimationFrame(stepFade);
+            }
+          };
+          requestAnimationFrame(stepFade);
+        }
+      };
+      videoIntroStart.addEventListener('timeupdate', onTimeUpdate);
+
+      // Cuando termine el video de transición, transición suave hacia los mundos
+      videoIntroStart.onended = handleIntroEnd;
     });
   }
 
@@ -432,6 +548,79 @@ import { STORY_SECTIONS } from '../config/story';
   window.addEventListener('scroll', () => {
     worldEngine?.update();
   }, { passive: true });
+
+  // Frenar scroll manual (rueda / touchpad) al punto de parada del mundo actual antes de hacer clic en el CTA
+  window.addEventListener('wheel', (e) => {
+    if (!isIntroTransitionActive) return;
+    if (unlockedWorldIndex >= STORY_SECTIONS.length - 1) return;
+    const maxScroll = getMaxStoryScroll();
+    const stopProgress = getWorldStopProgress(unlockedWorldIndex);
+    const maxAllowedScrollY = Math.round(stopProgress * maxScroll);
+
+    if (window.scrollY >= maxAllowedScrollY - 2 && e.deltaY > 0) {
+      e.preventDefault();
+      window.scrollTo({ top: maxAllowedScrollY, behavior: 'instant' });
+      autoscroll.pauseForWorldCTA();
+    }
+  }, { passive: false });
+
+  // Frenar desplazamiento táctil en móviles al punto de parada del mundo actual
+  let touchStartY = 0;
+  window.addEventListener('touchstart', (e) => {
+    if (e.touches[0]) {
+      touchStartY = e.touches[0].clientY;
+    }
+  }, { passive: true });
+
+  window.addEventListener('touchmove', (e) => {
+    if (!isIntroTransitionActive) return;
+    if (unlockedWorldIndex >= STORY_SECTIONS.length - 1) return;
+    const maxScroll = getMaxStoryScroll();
+    const stopProgress = getWorldStopProgress(unlockedWorldIndex);
+    const maxAllowedScrollY = Math.round(stopProgress * maxScroll);
+    const currentY = e.touches[0]?.clientY || 0;
+    const isScrollingDown = currentY < touchStartY;
+
+    if (window.scrollY >= maxAllowedScrollY - 2 && isScrollingDown) {
+      e.preventDefault();
+      window.scrollTo({ top: maxAllowedScrollY, behavior: 'instant' });
+      autoscroll.pauseForWorldCTA();
+    }
+  }, { passive: false });
+
+  // Manejador del clic en los botones "Siguiente Mundo"
+  document.querySelectorAll('.btn-next-world').forEach((btnEl) => {
+    btnEl.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const idx = Number(btnEl.getAttribute('data-world-index'));
+      const targetWorldIdx = idx + 1;
+
+      // Ocultar botón actual con animación suave
+      const btn = btnEl as HTMLElement;
+      btn.style.opacity = '0';
+      btn.style.pointerEvents = 'none';
+      btn.style.transform = 'translateY(12px)';
+
+      // Desbloquear el siguiente mundo
+      unlockedWorldIndex = targetWorldIdx;
+
+      // Transición fluida de scroll hacia el umbral del siguiente mundo
+      const nextSpan = worldSpans[targetWorldIdx];
+      if (nextSpan) {
+        const maxScroll = getMaxStoryScroll();
+        const targetScrollY = Math.round((nextSpan.start + 0.005) * maxScroll);
+        window.scrollTo({
+          top: targetScrollY,
+          behavior: 'smooth'
+        });
+
+        // Reanudar el auto-scroll suavemente tras iniciar el desplazamiento al nuevo mundo
+        setTimeout(() => {
+          autoscroll.resumeAfterWorldCTA();
+        }, 850);
+      }
+    });
+  });
 
   // Botón volver al inicio: resetear completamente la experiencia
   if (returnTopBtn) {
@@ -482,10 +671,19 @@ import { STORY_SECTIONS } from '../config/story';
         });
       }
 
-      // 8. Resetear flags de estado y typewriter TypeIt
+      // 8. Resetear audio de los mundos, flags de estado, typewriter, botones CTA y motor
+      audio.stopAll();
       isIntroTransitionActive = false;
+      unlockedWorldIndex = 0;
+      document.querySelectorAll('.btn-next-world').forEach((b) => {
+        const el = b as HTMLElement;
+        el.style.opacity = '0';
+        el.style.pointerEvents = 'none';
+        el.style.transform = 'translateY(12px)';
+      });
+      worldEngine?.reset();
       resetAllTypewriters();
-      updateActiveWorld(0);
+      updateActiveWorld(0, false);
     });
   }
 </script>

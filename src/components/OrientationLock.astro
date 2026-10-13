@@ -1,0 +1,138 @@
+---
+// OrientationLock.astro
+// Bloqueo y sugerencia cinematográfica de orientación para dispositivos móviles.
+// Pide al usuario rotar su dispositivo a modo horizontal (landscape) para disfrutar
+// de la experiencia cinematográfica en pantalla completa.
+---
+
+<aside 
+  id="orientation-lock-overlay" 
+  class="fixed inset-0 z-[100000] bg-black text-white flex flex-col items-center justify-center p-6 text-center select-none"
+  aria-live="polite"
+  role="alert"
+>
+  <div class="flex flex-col items-center justify-center max-w-sm mx-auto">
+    <!-- Icono Cinemático del Dispositivo Móvil con animación suave de rotación a horizontal -->
+    <div class="phone-anim-container relative flex items-center justify-center w-24 h-24 mb-6">
+      <svg
+        class="phone-device-svg w-20 h-12 text-white"
+        viewBox="0 0 80 46"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+        aria-hidden="true"
+      >
+        <!-- Chasis del teléfono en orientación horizontal con esquinas redondeadas -->
+        <rect
+          x="1.5"
+          y="1.5"
+          width="77"
+          height="43"
+          rx="12"
+          stroke="currentColor"
+          stroke-width="2.5"
+          fill="none"
+        />
+        <!-- Notch / Parlante lateral izquierdo -->
+        <line
+          x1="10"
+          y1="17"
+          x2="10"
+          y2="29"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+        />
+      </svg>
+    </div>
+
+    <!-- Subtítulo técnico/cinemático superior en Geist Mono -->
+    <p class="font-mono text-[11px] sm:text-xs tracking-[0.22em] text-zinc-400 uppercase font-medium mb-6">
+      Para una experiencia cinematica 
+    </p>
+
+    <!-- Título principal de instrucción -->
+    <h2 class="font-mono text-xl sm:text-2xl text-zinc-100 font-normal leading-relaxed text-balance">
+      Rota el dispositivo por favor.
+    </h2>
+  </div>
+</aside>
+
+<style>
+  /* Por defecto, en pantallas panorámicas/desktop está oculto */
+  #orientation-lock-overlay {
+    display: none;
+  }
+
+  /* Se activa exclusivamente en orientación vertical (portrait) en pantallas móviles/tablets */
+  @media screen and (orientation: portrait) and (max-width: 1024px) {
+    #orientation-lock-overlay {
+      display: flex;
+    }
+
+    :global(html),
+    :global(body) {
+      overflow: hidden !important;
+      touch-action: none !important;
+      overscroll-behavior: none !important;
+    }
+  }
+
+  /* Animación suave de rotación: de vertical (90deg) a horizontal (0deg) */
+  @keyframes rotate-to-landscape {
+    0%, 15% {
+      transform: rotate(90deg);
+    }
+    40%, 85% {
+      transform: rotate(0deg);
+    }
+    100% {
+      transform: rotate(90deg);
+    }
+  }
+
+  .phone-anim-container {
+    animation: rotate-to-landscape 3.4s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+    transform-origin: center center;
+    will-change: transform;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .phone-anim-container {
+      animation: none;
+      transform: rotate(0deg);
+    }
+  }
+</style>
+
+<script>
+  import { AutoScrollController } from '../utils/AutoScrollController';
+
+  function initOrientationLock() {
+    const mediaQuery = window.matchMedia('(orientation: portrait) and (max-width: 1024px)');
+    const autoScroll = AutoScrollController.getInstance();
+
+    const handleOrientation = (isPortrait: boolean) => {
+      autoScroll.setOrientationLocked(isPortrait);
+    };
+
+    // Estado al cargar la página
+    handleOrientation(mediaQuery.matches);
+
+    // Escucha de giros en vivo (soporta matchMedia, resize y orientationchange)
+    mediaQuery.addEventListener('change', (e) => {
+      handleOrientation(e.matches);
+    });
+
+    window.addEventListener('orientationchange', () => {
+      setTimeout(() => {
+        handleOrientation(mediaQuery.matches);
+      }, 100);
+    });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initOrientationLock);
+  } else {
+    initOrientationLock();
+  }
+</script>
