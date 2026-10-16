@@ -36,6 +36,9 @@ export interface ScrollWorldOptions {
   onSegmentChange?: (index: number) => void;
 }
 
+import { AssetPreloadManager } from './AssetPreloadManager';
+import { PerfMonitor } from './PerfMonitor';
+
 export class ScrollWorldEngine {
   private container: HTMLElement;
   private trackElement: HTMLElement;
@@ -75,8 +78,8 @@ export class ScrollWorldEngine {
     this.setupDOM();
     this.setupListeners();
     this.update();
-    // Precarga de Blobs en memoria en background para scrubbing ultra-fluido
-    this.loadClipsAsBlobs().then(() => {
+    // Precargar inicialmente el clip 0 en memoria si no está ya en caché
+    this.preloadClip(0).then(() => {
       if (!this.isDestroyed) {
         this.update();
       }
@@ -102,9 +105,10 @@ export class ScrollWorldEngine {
       video.setAttribute('playsinline', '');
       video.setAttribute('aria-hidden', 'true');
 
-      // Asignar URL de destino inmediatamente para permitir streaming y metadatos sin demora
+      // Si el recurso ya fue precargado por AssetPreloadManager, usar el Blob URL directamente
       const targetUrl = (this.isMobileView && clipItem.urlMobile) ? clipItem.urlMobile : clipItem.url;
-      video.src = targetUrl;
+      const cachedBlob = AssetPreloadManager.getInstance().getCachedBlobUrl(targetUrl);
+      video.src = cachedBlob || targetUrl;
       video.load();
 
       // Coalescing de búsqueda por video
@@ -121,34 +125,45 @@ export class ScrollWorldEngine {
     });
 
     this.container.appendChild(stage);
+
+    if (this.videoElements[0]) {
+      PerfMonitor.getInstance().trackActiveVideo(this.videoElements[0]);
+    }
   }
 
-  private async loadClipsAsBlobs() {
-    const loadPromises = this.clips.map(async (clipItem, idx) => {
-      const targetUrl = (this.isMobileView && clipItem.urlMobile) ? clipItem.urlMobile : clipItem.url;
-      const video = this.videoElements[idx];
+  public async preloadClip(idx: number): Promise<string> {
+    if (idx < 0 || idx >= this.clips.length) return '';
+    const clipItem = this.clips[idx];
+    const targetUrl = (this.isMobileView && clipItem.urlMobile) ? clipItem.urlMobile : clipItem.url;
+    const video = this.videoElements[idx];
 
-      try {
-        const response = await fetch(targetUrl);
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        const blob = await response.blob();
-        if (this.isDestroyed) return;
-        const blobUrl = URL.createObjectURL(blob);
-        this.blobUrls.push(blobUrl);
+    try {
+      const blobUrl = await AssetPreloadManager.getInstance().preload(targetUrl);
+      if (this.isDestroyed) return blobUrl;
 
-        if (video) {
-          const currentTime = video.currentTime;
-          video.src = blobUrl;
-          if (!Number.isNaN(currentTime) && currentTime > 0) {
-            video.currentTime = currentTime;
-          }
+      if (video && blobUrl && video.src !== blobUrl) {
+        const curTime = video.currentTime;
+        video.src = blobUrl;
+        if (!Number.isNaN(curTime) && curTime > 0) {
+          video.currentTime = curTime;
         }
-      } catch (_e) {
-        // En caso de fallo o conexión lenta, el video ya usa targetUrl asignado en setupDOM
       }
-    });
+      return blobUrl;
+    } catch (_e) {
+      return targetUrl;
+    }
+  }
 
-    await Promise.allSettled(loadPromises);
+  public setClipBlob(idx: number, blobUrl: string) {
+    if (idx < 0 || idx >= this.videoElements.length) return;
+    const video = this.videoElements[idx];
+    if (video && blobUrl && video.src !== blobUrl) {
+      const curTime = video.currentTime;
+      video.src = blobUrl;
+      if (!Number.isNaN(curTime) && curTime > 0) {
+        video.currentTime = curTime;
+      }
+    }
   }
 
   private setupListeners() {
@@ -285,6 +300,7 @@ export class ScrollWorldEngine {
           if (idx === activeClipIndex) {
             vid.style.opacity = '1';
             vid.style.zIndex = '10';
+            PerfMonitor.getInstance().trackActiveVideo(vid);
           } else {
             vid.style.opacity = '0';
             vid.style.zIndex = '0';
@@ -301,6 +317,7 @@ export class ScrollWorldEngine {
         if (!this.isSeekingMap[activeClipIndex]) {
           const targetTime = easedProgress * activeVideo.duration;
           if (Math.abs(activeVideo.currentTime - targetTime) > 0.03) {
+            PerfMonitor.getInstance().recordSeekStart();
             activeVideo.currentTime = targetTime;
           }
         }
