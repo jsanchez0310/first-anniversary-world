@@ -7,7 +7,6 @@ export interface StorySection {
   actSubtitle: string;
   title: string;
   worldNumber: number;
-  inspiration: string;
   quote: string;
   clips: string[];
   clipMobile?: string;
@@ -25,6 +24,12 @@ export interface StorySection {
    */
   alignment?: StoryAlignment;
   linger?: number;
+  /**
+   * Altura y duración de scroll para este mundo (en múltiplos de 100vh).
+   * Por ejemplo: scroll: 4 equivale a 400vh de recorrido en la pista,
+   * permitiendo que la velocidad de lectura, el tipeo y la reproducción de video
+   * se distribuyan uniformemente entre mundos.
+   */
   scroll?: number;
 }
 
@@ -47,7 +52,7 @@ export const STORY_ACTS: StoryAct[] = [
   {
     id: 'act-2',
     title: 'Acto II',
-    subtitle: 'Las Constelaciones del Dolor y las Raices',
+    subtitle: 'Las Almas que permanecen',
     description: 'Viajamos hacia atras en la memoria para honrar las sombras del pasado: el duelo de las ausencias, el recuerdo eterno de Luna y el abuelo San Miguel Arcangel.',
     audioTrack: '/audio/act_2.mp3'
   },
@@ -67,21 +72,17 @@ export const STORY_SECTIONS: StorySection[] = [
     actTitle: 'Acto I',
     actSubtitle: 'El Fuego y el Refugio del Presente',
     worldNumber: 1,
-    title: 'Mundo 1: El Santuario de las Horas Suspendidas',
-    inspiration: 'Clair Obscur: Expedition 33 y Past Lives',
-    quote: 'Si uno mira con atencion, los dias dificiles no son mas que un lienzo en blanco donde dos almas deciden volverse a elegir. Aunque el camino a veces este lleno de escombros y silencios, el presente es ese lugar fragil y hermoso donde decidimos quedarnos, pintando de colores calidos un ano entero de batallas libradas codo a codo, sabiendo que el simple hecho de intentarlo ya es una victoria.',
+    title: 'El camino de las horas suspendidas',
+    quote: 'Si uno mira con atención, los dias dificiles no son mas que un lienzo en blanco donde dos almas deciden volverse a elegir. Aunque el camino a veces este lleno de dificultades y silencios, el presente es ese lugar fragil y hermoso donde decidimos quedarnos, pintando de colores en un año de batallas libradas, sabiendo que el simple hecho de intentarlo ya es una victoria.',
     clips: [
-      '/world_1_1.mp4',
-      '/world_1_2.mp4',
-      '/world_1_3.mp4',
-      '/world_1_4.mp4'
+      '/world_1.mp4',
     ],
-    clipMobile: '/world_1_720.mp4',
-    audioTrack: '/audio/world_1_angelica.mp3',
+    clipMobile: '/world_1.mp4',
+    audioTrack: '/audio/world_1.mp3',
     accent: '#d4af37',
     alignment: 'left',
     linger: 0.45,
-    scroll: 4
+    scroll: 3
   },
   {
     id: 'world-2',
@@ -89,14 +90,12 @@ export const STORY_SECTIONS: StorySection[] = [
     actTitle: 'Acto I',
     actSubtitle: 'El Fuego y el Refugio del Presente',
     worldNumber: 2,
-    title: 'Mundo 2: El Atelier del Fuego Eterno y la Terraza de Medellin',
-    inspiration: 'Elden Ring, Orgullo y Prejuicio y la noche bajo las estrellas',
-    quote: 'Y cuando el mundo parecia desmoronarse en nuestros primeros pasos tambaleantes, el destino nos tendio una trampa de estrellas. En una terraza bajo el cielo de Medellin, sin mas testigos que la noche y la ciudad brillando a nuestros pies, supe que tu piel y la mia hablaban el mismo idioma milenario. Esta es nuestra fortaleza: un fuego indomable, una pasion feroz que desafia cualquier tormenta y nos vuelve invencibles.',
+    title: 'El Santuario del fuego eterno y el tiamat de la eterna primavera.',
+    quote: 'Y cuando todo parecia desmoronarse en nuestros primeros pasos tambaleantes, el destino nos tendio una trampa de estrellas. En una terraza bajo el cielo estrellado de la ciudad de la eterna primera, la noche, las estrellas y la ciudad brillando a nuestros pies fueron testigos de ello, supe que tu piel y la mia hablaban el mismo idioma. Nuestra fortalezas: una pasion indomable, un amor infinito y unas inmensas ganas de conquistar el mundo justos nos vuelve invencibles.',
     clips: [
-      '/world_2_1.mp4',
-      '/world_2_2.mp4'
+      '/world_2.mp4',
     ],
-    clipMobile: '/world_2_2.mp4',
+    clipMobile: '/world_2.mp4',
     audioTrack: '/audio/world_2.mp3',
     accent: '#e26d5c',
     alignment: 'right',
@@ -107,17 +106,17 @@ export const STORY_SECTIONS: StorySection[] = [
     id: 'world-3',
     actId: 'act-2',
     actTitle: 'Acto II',
-    actSubtitle: 'Las Constelaciones del Dolor y las Raices',
+    actSubtitle: 'Las Almas que permanecen',
     worldNumber: 3,
-    title: 'Mundo 3: El Puente de los Cempasuchiles y Cometas',
-    inspiration: 'Coco, Your Name y el duelo por Luna y el abuelo',
-    quote: 'Lo esencial es invisible a los ojos. Las almas que amamos nunca se van; cruzan un puente de luz y petalos encendidos para convertirse en nuestra constelacion guia. Aqui habitan las lagrimas que sanaron la tierra: el eco eterno de tu abuelo, tu San Miguel Arcangel, y el latido en el viento de nuestra querida Luna, cuya huella vive en cada estrella que hoy ilumina nuestra historia.',
-    clips: [],
+    title: 'El Puente de los Cempasuchiles',
+    quote: 'Las almas que amamos nunca se van; trascienden y cruzan un puente de luz entre dos mundos, lleno de petalos que guían devuelta a nuestros seres queridos. Aqui se hace sentir el latido en el viento de nuestra querida Luna, su presencia nunca se ha esfumado y su huella vive en cada estrella que hoy iluminan nuestra historia.',
+    clips: ['/world_3.mp4'],
+    clipMobile: '/world_3.mp4',
     audioTrack: '/audio/world_3.mp3',
     accent: '#f39c12',
     alignment: 'left',
     linger: 0.45,
-    scroll: 1.8
+    scroll: 3
   },
   {
     id: 'world-4',
@@ -126,7 +125,6 @@ export const STORY_SECTIONS: StorySection[] = [
     actSubtitle: 'El Principio del Manana',
     worldNumber: 4,
     title: 'Mundo 4: El Valle de los Cerezos y el Zorro de la Aurora',
-    inspiration: 'Japon, Robot Dreams, Dune y El Principito con Venus',
     quote: 'Caminando en linea recta no puede uno llegar muy lejos... pero si miras hacia el horizonte, hacia los atardeceres dorados de un desierto lejano o los campos de cerezos que suenan con Japon, sabras que lo mejor de nuestra historia apenas comienza. Iremos a Espana tomados de la mano, con nuestra amada Venus guiando el camino, porque domesticar un corazon significa que seremos el refugio del otro por siempre y para siempre.',
     clips: [],
     audioTrack: '/audio/world_4.mp3',
@@ -142,7 +140,6 @@ export const STORY_SECTIONS: StorySection[] = [
     actSubtitle: 'El Principio del Manana',
     worldNumber: 5,
     title: 'Mundo 5: La Ciudad de los Ecos Estelares',
-    inspiration: 'Ciencia ficcion cosmica, union de dos mundos y eternidad',
     quote: 'Al final, las historias mas hermosas no son las que no tienen tormentas, sino aquellas donde dos caminantes descubren que su brujula son los ojos del otro. Este no es el final del camino, sino el portal hacia todos los universos que nos quedan por habitar juntos.',
     clips: [],
     audioTrack: '/audio/world_5.mp3',

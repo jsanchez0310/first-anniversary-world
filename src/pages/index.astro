@@ -4,6 +4,9 @@ import IntroHero from '../components/IntroHero.astro';
 import NavigationIsland from '../components/NavigationIsland.astro';
 import TextReveal from '../components/TextReveal.astro';
 import { STORY_SECTIONS } from '../config/story';
+
+// Altura total de la pista de scroll calculada dinámicamente sumando la prop `scroll` de cada mundo (1 unidad = 100vh)
+const totalScrollHeightVh = Math.round(STORY_SECTIONS.reduce((sum, sec) => sum + (sec.scroll ?? 3), 0) * 100);
 ---
 
 <Layout title="Primer Aniversario — Un Universo a Dos Voces">
@@ -44,7 +47,7 @@ import { STORY_SECTIONS } from '../config/story';
     <div 
       id="scroll-story-track" 
       class="relative z-10 w-full pointer-events-none hidden" 
-      style="height: 900vh;"
+      style={`height: ${totalScrollHeightVh}vh;`}
     ></div>
 
     <!-- Escenario Narrativo Fijo en Pantalla Completa (Configurable por mundo: left [30%], right [30%] o bottom; Acto siempre arriba a la izquierda) -->
@@ -244,14 +247,26 @@ import { STORY_SECTIONS } from '../config/story';
   window.addEventListener('click', unmuteOnFirstGesture, { once: true, passive: true });
   window.addEventListener('touchstart', unmuteOnFirstGesture, { once: true, passive: true });
 
-  // Distribución de tramos para cada mundo en la pista de scroll (0 a 1)
-  const worldSpans = [
-    { worldIndex: 0, start: 0.00, end: 0.34 },
-    { worldIndex: 1, start: 0.34, end: 0.60 }, // 26% del scroll total para un recorrido cinematográfico y pausado de Medellín
-    { worldIndex: 2, start: 0.60, end: 0.74 },
-    { worldIndex: 3, start: 0.74, end: 0.88 },
-    { worldIndex: 4, start: 0.88, end: 1.00 },
-  ];
+  // Distribución dinámica de tramos para cada mundo calculada a partir de su prop `scroll` en STORY_SECTIONS
+  const totalScrollWeight = STORY_SECTIONS.reduce((sum, sec) => sum + (sec.scroll ?? 3), 0);
+  let accumulatedProgress = 0;
+  const worldSpans = STORY_SECTIONS.map((sec, idx) => {
+    const weight = sec.scroll ?? 3;
+    const spanDuration = weight / totalScrollWeight;
+    const start = accumulatedProgress;
+    const end = idx === STORY_SECTIONS.length - 1 ? 1.0 : accumulatedProgress + spanDuration;
+    accumulatedProgress = end;
+    return {
+      worldIndex: idx,
+      start,
+      end,
+    };
+  });
+
+  if (storyTrack) {
+    const totalTrackHeightVh = Math.round(totalScrollWeight * 100);
+    storyTrack.style.height = `${totalTrackHeightVh}vh`;
+  }
 
   // Actualizar el efecto typewriter en sincronía bidireccional continua con el scroll (adelante y atrás)
   function updateTypewriterProgress(worldIdx: number, worldProgress: number) {
