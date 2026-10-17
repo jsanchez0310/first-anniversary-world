@@ -20,9 +20,14 @@ export function getCdnBaseUrl(): string {
 export function resolveMediaUrl(path: string): string {
   if (!path) return '';
   if (path.startsWith('http://') || path.startsWith('https://') || path.startsWith('blob:')) {
+    console.info(`Media URL resolved from ${path}`, path);
     return path;
   }
   const cleanPath = path.startsWith('/') ? path : `/${path}`;
   const base = getCdnBaseUrl();
-  return base ? `${base}${cleanPath}` : cleanPath;
+
+  const url = base ? `${base}${cleanPath}` : cleanPath;
+
+  console.info(`Media URL resolved from ${path}`, url);
+  return url
 }

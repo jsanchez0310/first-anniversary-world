@@ -40,7 +40,12 @@ export interface StoryAct {
   audioTrack?: string;
 }
 
-import { resolveMediaUrl } from './cdn';
+import { resolveMediaUrl, getCdnBaseUrl } from './cdn';
+
+const cdnBase = getCdnBaseUrl();
+console.log(
+  `[Media] Resolviendo multimedia desde: ${cdnBase ? `CDN (${cdnBase})` : 'Local (/public)'}`
+);
 
 export const INTRO_MEDIA = {
   initialLoopDesktop: resolveMediaUrl('/desktop/initial_loop_video.mp4'),
@@ -135,7 +140,7 @@ export const STORY_SECTIONS: StorySection[] = [
     title: 'Mundo 4: El Valle de los Cerezos y el Zorro de la Aurora',
     quote: 'Caminando en linea recta no puede uno llegar muy lejos... pero si miras hacia el horizonte, hacia los atardeceres dorados de un desierto lejano o los campos de cerezos que suenan con Japon, sabras que lo mejor de nuestra historia apenas comienza. Iremos a Espana tomados de la mano, con nuestra amada Venus guiando el camino, porque domesticar un corazon significa que seremos el refugio del otro por siempre y para siempre.',
     clips: [],
-    audioTrack: '/audio/world_4.mp3',
+    audioTrack: resolveMediaUrl('/audio/world_4.mp3'),
     accent: '#f8a5c2',
     alignment: 'left',
     linger: 0.45,
@@ -150,7 +155,7 @@ export const STORY_SECTIONS: StorySection[] = [
     title: 'Mundo 5: La Ciudad de los Ecos Estelares',
     quote: 'Al final, las historias mas hermosas no son las que no tienen tormentas, sino aquellas donde dos caminantes descubren que su brujula son los ojos del otro. Este no es el final del camino, sino el portal hacia todos los universos que nos quedan por habitar juntos.',
     clips: [],
-    audioTrack: '/audio/world_5.mp3',
+    audioTrack: resolveMediaUrl('/audio/world_5.mp3'),
     accent: '#70a1ff',
     alignment: 'left',
     linger: 0.45,
