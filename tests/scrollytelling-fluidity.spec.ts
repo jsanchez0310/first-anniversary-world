@@ -2,6 +2,16 @@ import { test, expect } from '@playwright/test';
 
 test.describe('Scrollytelling: Fluidez, Carga Progresiva y Scrubbing', () => {
 
+  test.beforeEach(async ({ page }) => {
+    // Interceptar peticiones hacia CDN para servirlas instantáneamente desde el servidor local de prueba
+    await page.route(/.*vercel-storage\.com\/(.*)/, async (route) => {
+      const url = new URL(route.request().url());
+      const localUrl = `http://127.0.0.1:4321${url.pathname}`;
+      const response = await route.fetch({ url: localUrl });
+      await route.fulfill({ response });
+    });
+  });
+
   test('1. Loading Screen inicial: muestra progreso 0-100% y revela el libro mágico', async ({ page }) => {
     await page.goto('/?debug=perf');
 
@@ -37,11 +47,12 @@ test.describe('Scrollytelling: Fluidez, Carga Progresiva y Scrubbing', () => {
     const videoIntro = page.locator('#video-intro-start');
     await expect(videoIntro).toHaveCSS('opacity', '1');
 
-    // Avanzar tiempo del video de intro para que termine o simular end
+    // Avanzar tiempo del video de intro y detonar fin de intro
     await page.evaluate(() => {
       const v = document.getElementById('video-intro-start') as HTMLVideoElement;
       if (v) {
-        v.currentTime = v.duration - 0.05;
+        v.currentTime = v.duration;
+        v.dispatchEvent(new Event('ended'));
       }
     });
 
@@ -62,7 +73,10 @@ test.describe('Scrollytelling: Fluidez, Carga Progresiva y Scrubbing', () => {
     await page.locator('#btn-start-journey').click();
     await page.evaluate(() => {
       const v = document.getElementById('video-intro-start') as HTMLVideoElement;
-      if (v) v.currentTime = v.duration - 0.05;
+      if (v) {
+        v.currentTime = v.duration;
+        v.dispatchEvent(new Event('ended'));
+      }
     });
 
     await expect(page.locator('#sw-world-clips')).toHaveCSS('opacity', '1', { timeout: 10000 });
@@ -114,7 +128,10 @@ test.describe('Scrollytelling: Fluidez, Carga Progresiva y Scrubbing', () => {
     await page.locator('#btn-start-journey').click();
     await page.evaluate(() => {
       const v = document.getElementById('video-intro-start') as HTMLVideoElement;
-      if (v) v.currentTime = v.duration - 0.05;
+      if (v) {
+        v.currentTime = v.duration;
+        v.dispatchEvent(new Event('ended'));
+      }
     });
 
     await expect(page.locator('#sw-world-clips')).toHaveCSS('opacity', '1', { timeout: 10000 });
@@ -145,4 +162,49 @@ test.describe('Scrollytelling: Fluidez, Carga Progresiva y Scrubbing', () => {
     expect(scrollY).toBeGreaterThan(100);
   });
 
+  test('5. Fuegos artificiales con Canvas Confetti en el card final y desaparición al hacer scroll hacia arriba', async ({ page }) => {
+    await page.goto('/?debug=perf');
+    await page.locator('#loading-screen').waitFor({ state: 'hidden', timeout: 25000 });
+
+    // Iniciar viaje
+    await page.locator('#btn-start-journey').click();
+    await page.evaluate(() => {
+      const v = document.getElementById('video-intro-start') as HTMLVideoElement;
+      if (v) {
+        v.currentTime = v.duration;
+        v.dispatchEvent(new Event('ended'));
+      }
+    });
+
+    await expect(page.locator('#sw-world-clips')).toHaveCSS('opacity', '1', { timeout: 10000 });
+
+    const epilogueCard = page.locator('#epilogue-card');
+    const confettiCanvas = page.locator('#epilogue-confetti-canvas');
+    await expect(epilogueCard).toBeAttached();
+    await expect(confettiCanvas).toBeAttached();
+
+    // Inicialmente el canvas de confetti debe estar oculto/opacidad 0
+    await expect(confettiCanvas).toHaveCSS('opacity', '0');
+
+    // Desbloquear todos los mundos (5 = epílogo desbloqueado) para permitir navegación libre hasta el final
+    await page.evaluate(() => {
+      (window as any).__setUnlockedWorldIndex(5);
+      const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+      window.scrollTo({ top: maxScroll, behavior: 'instant' });
+      window.dispatchEvent(new Event('scroll'));
+    });
+
+    // Al llegar al final de la página, el canvas de fuegos artificiales se activa (opacity: 1)
+    await expect(confettiCanvas).toHaveCSS('opacity', '1', { timeout: 3000 });
+
+    // Al hacer scroll hacia arriba, el efecto debe detenerse y desaparecer (opacity: 0)
+    await page.evaluate(() => {
+      window.scrollTo({ top: 500, behavior: 'instant' });
+      window.dispatchEvent(new Event('scroll'));
+    });
+
+    await expect(confettiCanvas).toHaveCSS('opacity', '0', { timeout: 3000 });
+  });
+
 });
+

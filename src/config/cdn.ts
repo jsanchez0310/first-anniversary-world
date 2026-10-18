@@ -7,7 +7,10 @@
  */
 
 export function getCdnBaseUrl(): string {
-  const envUrl = import.meta.env?.PUBLIC_CDN_URL || '';
+  const envUrl =
+    (typeof import.meta !== 'undefined' && import.meta.env?.PUBLIC_CDN_URL) ||
+    (typeof process !== 'undefined' && process.env?.PUBLIC_CDN_URL) ||
+    '';
   return envUrl.endsWith('/') ? envUrl.slice(0, -1) : envUrl;
 }
 

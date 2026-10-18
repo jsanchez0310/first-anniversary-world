@@ -18,17 +18,24 @@ export interface AutoScrollState {
 export type StateListener = (state: AutoScrollState) => void;
 export type CountdownListener = (progress: number, remainingMs: number) => void;
 
+declare global {
+  interface Window {
+    __autoScrollControllerInstance?: AutoScrollController;
+  }
+}
+
 export class AutoScrollController {
   private static instance: AutoScrollController | null = null;
 
   // Velocidad constante en píxeles por segundo (ritmo sereno y poético para lectura humana en 60Hz, 120Hz o 144Hz)
   private speedPxPerSecond: number = 42; 
   private pauseDuration: number = 3200; // Milisegundos de espera tras interacción manual antes de reanudar
-  private isEnabled: boolean = true;
+  private isEnabled: boolean = false;
   private isJourneyActive: boolean = false;
   private isPausedByUser: boolean = false;
   private isWaitingForWorldCTA: boolean = false;
   private isOrientationLocked: boolean = false;
+  private isLoopRunning: boolean = false;
 
   private rafId: number | null = null;
   private countdownRafId: number | null = null;
@@ -46,6 +53,12 @@ export class AutoScrollController {
   }
 
   public static getInstance(): AutoScrollController {
+    if (typeof window !== 'undefined') {
+      if (!window.__autoScrollControllerInstance) {
+        window.__autoScrollControllerInstance = new AutoScrollController();
+      }
+      return window.__autoScrollControllerInstance;
+    }
     if (!AutoScrollController.instance) {
       AutoScrollController.instance = new AutoScrollController();
     }
@@ -62,7 +75,12 @@ export class AutoScrollController {
     window.addEventListener('wheel', handleUserInteraction, { passive: true });
 
     // 2. Desplazamiento táctil en dispositivos móviles
-    window.addEventListener('touchmove', handleUserInteraction, { passive: true });
+    window.addEventListener('touchmove', (e) => {
+      const target = e.target as HTMLElement | null;
+      if (target?.closest('button') || target?.closest('a')) return;
+      handleUserInteraction();
+    }, { passive: true });
+
     window.addEventListener('touchstart', (e) => {
       const target = e.target as HTMLElement | null;
       if (target?.closest('button') || target?.closest('a')) return;
@@ -80,8 +98,11 @@ export class AutoScrollController {
     }, { passive: true });
   }
 
-  // Pausa temporal por interacción del usuario con cuenta regresiva
-  public pauseAndStartCountdown() {
+  // Pausa temporal por interacción del usuario o lectura con cuenta regresiva
+  public pauseAndStartCountdown(durationMs?: number) {
+    if (!this.isEnabled || !this.isJourneyActive || this.isWaitingForWorldCTA) return;
+
+    const actualDuration = durationMs ?? this.pauseDuration;
     this.isPausedByUser = true;
     this.stopScrollLoop();
     this.stopCountdown();
@@ -89,19 +110,27 @@ export class AutoScrollController {
     this.pauseStartTime = performance.now();
     this.notifyState();
     // Notificar inmediatamente para desplegar la barra de progreso al instante
-    this.notifyCountdown(0.01, this.pauseDuration);
+    this.notifyCountdown(0.01, actualDuration);
 
     const tickCountdown = (now: number) => {
+      if (!this.isEnabled || !this.isJourneyActive) {
+        this.stopCountdown();
+        this.isPausedByUser = false;
+        this.notifyCountdown(0, 0);
+        this.notifyState();
+        return;
+      }
+
       const elapsed = now - this.pauseStartTime;
-      const progress = Math.min(1, elapsed / this.pauseDuration);
-      const remainingMs = Math.max(0, this.pauseDuration - elapsed);
+      const progress = Math.min(1, elapsed / actualDuration);
+      const remainingMs = Math.max(0, actualDuration - elapsed);
 
       this.notifyCountdown(progress, remainingMs);
 
       if (progress < 1) {
         this.countdownRafId = requestAnimationFrame(tickCountdown);
       } else {
-        // Fin de la espera: reanudar auto-scroll suavemente
+        // Fin de la espera: reanudar auto-scroll suavemente si aún está habilitado
         this.stopCountdown();
         this.isPausedByUser = false;
         this.notifyCountdown(1, 0);
@@ -117,12 +146,19 @@ export class AutoScrollController {
 
   private startScrollLoop() {
     this.stopScrollLoop();
+    if (!this.isEnabled || !this.isJourneyActive || this.isPausedByUser || this.isWaitingForWorldCTA || this.isOrientationLocked) {
+      return;
+    }
+
+    this.isLoopRunning = true;
     this.lastLoopTime = performance.now();
     this.scrollSubpixelAccumulator = 0;
 
     const loop = (now: number) => {
-      if (!this.isEnabled || !this.isJourneyActive || this.isPausedByUser || this.isWaitingForWorldCTA || this.isOrientationLocked) {
+      if (!this.isLoopRunning || !this.isEnabled || !this.isJourneyActive || this.isPausedByUser || this.isWaitingForWorldCTA || this.isOrientationLocked) {
+        this.isLoopRunning = false;
         this.lastLoopTime = 0;
+        this.rafId = null;
         return;
       }
 
@@ -151,6 +187,14 @@ export class AutoScrollController {
         window.scrollBy({ top: intPixels, behavior: 'instant' });
       }
 
+      // Comprobar nuevamente tras scrollBy por si algún listener síncrono modificó el estado
+      if (!this.isLoopRunning || !this.isEnabled || !this.isJourneyActive || this.isPausedByUser || this.isWaitingForWorldCTA || this.isOrientationLocked) {
+        this.isLoopRunning = false;
+        this.lastLoopTime = 0;
+        this.rafId = null;
+        return;
+      }
+
       this.rafId = requestAnimationFrame(loop);
     };
 
@@ -159,7 +203,8 @@ export class AutoScrollController {
   }
 
   private stopScrollLoop() {
-    if (this.rafId) {
+    this.isLoopRunning = false;
+    if (this.rafId !== null) {
       cancelAnimationFrame(this.rafId);
       this.rafId = null;
     }
@@ -168,7 +213,7 @@ export class AutoScrollController {
   }
 
   private stopCountdown() {
-    if (this.countdownRafId) {
+    if (this.countdownRafId !== null) {
       cancelAnimationFrame(this.countdownRafId);
       this.countdownRafId = null;
     }
@@ -221,9 +266,9 @@ export class AutoScrollController {
     }
   }
 
-  // Alternar encendido/apagado manual mediante el botón del HUD
-  public toggle(): boolean {
-    this.isEnabled = !this.isEnabled;
+  // Establecer encendido/apagado manual explícito
+  public setEnabled(enabled: boolean): boolean {
+    this.isEnabled = enabled;
     if (!this.isEnabled) {
       this.stopScrollLoop();
       this.stopCountdown();
@@ -240,6 +285,11 @@ export class AutoScrollController {
     return this.isEnabled;
   }
 
+  // Alternar encendido/apagado manual mediante el botón del HUD
+  public toggle(): boolean {
+    return this.setEnabled(!this.isEnabled);
+  }
+
   // Iniciar el auto-scroll al finalizar la animación de video introductoria on_intro_start
   public startJourney() {
     this.isJourneyActive = true;
@@ -250,6 +300,8 @@ export class AutoScrollController {
 
     if (this.isEnabled) {
       this.startScrollLoop();
+    } else {
+      this.stopScrollLoop();
     }
     this.notifyState();
   }

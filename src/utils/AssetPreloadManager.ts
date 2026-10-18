@@ -129,8 +129,22 @@ export class AssetPreloadManager {
         notify(loaded, total, 100);
         return blobUrl;
       } catch (err) {
-        console.warn(`[AssetPreloadManager] Fallo de precarga para ${url}, usando URL directa:`, err);
-        // Si falla fetch (por ejemplo por CORS estricto en desarrollo), retornar URL original como fallback
+        console.warn(`[AssetPreloadManager] Fallo de precarga para ${url}, intentando fallback local:`, err);
+        if (url.startsWith('http://') || url.startsWith('https://')) {
+          try {
+            const localPath = new URL(url).pathname;
+            const fallbackBlob = await this.preload(localPath, (p) => {
+              notify(p.loaded, p.total, p.percent);
+            });
+            this.blobCache.set(url, fallbackBlob);
+            notify(100, 100, 100);
+            return fallbackBlob;
+          } catch (_fallbackErr) {
+            notify(100, 100, 100);
+            return url;
+          }
+        }
+        notify(100, 100, 100);
         return url;
       } finally {
         this.inFlightLoads.delete(url);

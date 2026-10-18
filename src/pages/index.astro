@@ -20,19 +20,17 @@ import { STORY_SECTIONS, INTRO_MEDIA } from '../config/story';
       <!-- Video 1: Loop de bienvenida (El Libro Mágico) con sonido activado -->
       <video
         id="video-initial-loop"
-        src={INTRO_MEDIA.initialLoopDesktop}
         loop
         playsinline
-        preload="auto"
+        preload="none"
         class="absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 ease-in-out opacity-100 z-10"
       ></video>
 
       <!-- Video 2: Transición cinemática on_intro_start con sonido activado -->
       <video
         id="video-intro-start"
-        src={INTRO_MEDIA.introStartDesktop}
         playsinline
-        preload="auto"
+        preload="none"
         class="absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 ease-in-out opacity-0 z-0"
       ></video>
 
@@ -47,7 +45,7 @@ import { STORY_SECTIONS, INTRO_MEDIA } from '../config/story';
     <div 
       id="scroll-story-track" 
       class="relative z-10 w-full pointer-events-none hidden" 
-      style="height: 900vh;"
+      style="height: 1200vh;"
     ></div>
 
     <!-- Escenario Narrativo Fijo en Pantalla Completa (Configurable por mundo: left [30%], right [30%] o bottom; Acto siempre arriba a la izquierda) -->
@@ -60,7 +58,7 @@ import { STORY_SECTIONS, INTRO_MEDIA } from '../config/story';
         return (
           <div 
             id={`narrative-world-${idx}`}
-            class="narrative-world-panel fixed inset-0 px-6 sm:px-12 md:px-16 pt-6 sm:pt-8 pb-8 sm:pb-12 flex flex-col justify-between transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] opacity-0 translate-y-6 pointer-events-none select-none"
+            class="narrative-world-panel fixed inset-0 px-6 xl:px-8 pt-3 xl:pt-12 pb-3 xl:pb-12 flex flex-col justify-between transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] opacity-0 translate-y-6 pointer-events-none select-none"
             data-world-index={idx}
             data-audio={sec.audioTrack}
           >
@@ -76,7 +74,7 @@ import { STORY_SECTIONS, INTRO_MEDIA } from '../config/story';
             )}
 
             <!-- TOP: Línea de Acto (SIEMPRE ARRIBA A LA IZQUIERDA, SIN PILL, TAL CUAL ESTABA) -->
-            <div class="relative z-10 self-start max-w-[calc(100%-190px)]">
+            <div class="relative z-50 self-start max-w-[calc(100%-190px)]">
               <span 
                 class="text-xs uppercase tracking-wider font-semibold flex items-center gap-1.5 drop-shadow-[0_2px_8px_rgba(0,0,0,0.95)]"
                 style={`color: ${sec.accent};`}
@@ -95,10 +93,12 @@ import { STORY_SECTIONS, INTRO_MEDIA } from '../config/story';
                 : 'w-full max-w-5xl mx-auto self-center'
             }`}>
               <!-- Título del Mundo -->
-              <h2 class={`font-bold tracking-tight text-[#f4f4f5] mb-2 sm:mb-3 text-balance drop-shadow-[0_2px_14px_rgba(0,0,0,0.95)] ${
+              <h2 class={`font-bold tracking-tight text-[#f4f4f5] mb-2 sm:mb-3 text-balance leading-tight drop-shadow-[0_2px_14px_rgba(0,0,0,0.95)] text-lg sm:text-xl md:text-2xl lg:text-3xl ${
                 align === 'bottom'
-                  ? 'text-2xl sm:text-3xl md:text-4xl'
-                  : 'text-2xl sm:text-3xl md:text-[1.85rem] lg:text-[2.1rem] leading-tight'
+                  ? 'text-center'
+                  : align === 'right'
+                  ? 'text-right'
+                  : 'text-left'
               }`}>
                 {sec.title}
               </h2>
@@ -113,7 +113,7 @@ import { STORY_SECTIONS, INTRO_MEDIA } from '../config/story';
                 </p>
               )}
 
-              {/* Botón dentro debajo del texto cuando alignment === 'bottom' */}
+              {/* Botón dentro debajo del texto cuando alignment === 'bottom' (solo en mundos con siguiente mundo) */}
               {idx < STORY_SECTIONS.length - 1 && align === 'bottom' && (
                 <div class="mt-3.5 sm:mt-5 w-full flex items-center">
                   <button
@@ -166,24 +166,35 @@ import { STORY_SECTIONS, INTRO_MEDIA } from '../config/story';
       })}
     </div>
 
+    <!-- Canvas de Confetti / Fuegos Artificiales (por detrás del card del epílogo) -->
+    <canvas 
+      id="epilogue-confetti-canvas" 
+      class="fixed inset-0 w-full h-full pointer-events-none z-[15] transition-opacity duration-500 opacity-0"
+    ></canvas>
+
     <!-- Sección de Cierre / Epílogo -->
     <section 
       id="epilogue-section"
-      class="relative min-h-[90vh] flex flex-col items-center justify-center px-6 py-24 bg-transparent text-center z-10 pointer-events-auto hidden"
+      class="relative min-h-[90vh] flex flex-col items-center justify-center px-6 pt-16 pb-2 xl:pb-24 xl:pt-24 bg-transparent text-center z-20 pointer-events-auto hidden"
     >
-      <div class="max-w-2xl flex flex-col items-center p-8 sm:p-12 rounded-3xl bg-black/40 backdrop-blur-md border border-white/10 shadow-2xl">
-        <span class="text-xs font-mono uppercase tracking-widest text-[#d4af37] mb-4">Epilogo y Promesa</span>
+      <div 
+        id="epilogue-card"
+        class="relative z-10 max-w-2xl flex flex-col items-center p-8 sm:p-12 rounded-3xl bg-black/60 backdrop-blur-md border border-white/10 shadow-2xl"
+      >
+        <span class="text-xs font-mono uppercase tracking-widest text-[#d4af37] mb-4">Feliz Aniversario</span>
         <h3 class="text-3xl sm:text-5xl font-bold tracking-tight text-[#f4f4f5] mb-6 text-balance max-w-[680px]">
           "Lo esencial es invisible a los ojos"
         </h3>
         <p class="text-zinc-300 leading-relaxed text-pretty mb-8 text-base sm:text-lg">
-          Gracias por este primer ano recorriendo mundos, aprendiendo a volar entre tormentas y creando juntos nuestro propio hogar cosmico.
+          Gracias por este primer año recorriendo mundos, aprendiendo a volar entre tormentas y creando juntos nuestra propia historia.
         </p>
+        <p class='text-red-400'>TE AMO ANGELICA</p>
+        <a class="underline! font-medium hover:no-underline" href="https://open.spotify.com/playlist/6FyxWfDINqiV0fypZ597Hr?si=WM4cma72TKqXTasadXDJnw&utm_source=whatsapp&pi=eBQf2TZTR8GP8" target="_blank">Un ultimo regalo 🎁</a>
         <button 
           id="btn-return-top"
-          class="px-8 py-3 rounded-full border border-amber-400/40 bg-zinc-900/80 hover:bg-zinc-800 text-base font-semibold text-zinc-100 transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] hover:scale-[1.03] active:scale-[0.98] cursor-pointer shadow-lg"
+          class="px-8 py-3 rounded-full border border-amber-400/40 bg-zinc-900/80 hover:bg-zinc-800 text-base font-semibold text-zinc-100 transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] hover:scale-[1.03] active:scale-[0.98] cursor-pointer shadow-lg mt-6"
         >
-          Volver al Inicio
+          Volver al comenzar
         </button>
       </div>
     </section>
@@ -197,6 +208,7 @@ import { STORY_SECTIONS, INTRO_MEDIA } from '../config/story';
   import { AssetPreloadManager, type PreloadProgress } from '../utils/AssetPreloadManager';
   import { PerfMonitor } from '../utils/PerfMonitor';
   import { STORY_SECTIONS, INTRO_MEDIA } from '../config/story';
+  import confetti from 'canvas-confetti';
 
   const audio = AudioController.getInstance();
   const autoscroll = AutoScrollController.getInstance();
@@ -212,6 +224,8 @@ import { STORY_SECTIONS, INTRO_MEDIA } from '../config/story';
   const returnTopBtn = document.getElementById('btn-return-top') as HTMLButtonElement | null;
   const storyTrack = document.getElementById('scroll-story-track') as HTMLElement | null;
   const epilogue = document.getElementById('epilogue-section') as HTMLElement | null;
+  const epilogueCard = document.getElementById('epilogue-card') as HTMLElement | null;
+  const confettiCanvas = document.getElementById('epilogue-confetti-canvas') as HTMLCanvasElement | null;
   const cinemaBottomOverlay = document.getElementById('cinema-bottom-overlay') as HTMLElement | null;
 
   // Elementos de la pantalla de carga inicial
@@ -224,6 +238,12 @@ import { STORY_SECTIONS, INTRO_MEDIA } from '../config/story';
   let worldEngine: ScrollWorldEngine | null = null;
   let currentActiveWorldIndex = 0;
   let unlockedWorldIndex = 0;
+  let hasPausedForWorld5Reading = false;
+  if (typeof window !== 'undefined') {
+    (window as any).__setUnlockedWorldIndex = (idx: number) => {
+      unlockedWorldIndex = idx;
+    };
+  }
 
   // Precarga inteligente secuencial del mundo siguiente con progreso en el botón
   function triggerPreloadForWorld(targetWorldIdx: number) {
@@ -309,12 +329,12 @@ import { STORY_SECTIONS, INTRO_MEDIA } from '../config/story';
   }).then(() => {
     // Al completar la precarga inicial (100%), asignar los Blobs a los videos correspondientes
     const loopBlob = preloadManager.getCachedBlobUrl(initialLoopUrl);
-    if (videoLoop && loopBlob) {
-      videoLoop.src = loopBlob;
+    if (videoLoop) {
+      videoLoop.src = loopBlob || initialLoopUrl;
     }
     const introBlob = preloadManager.getCachedBlobUrl(introStartUrl);
-    if (videoIntroStart && introBlob) {
-      videoIntroStart.src = introBlob;
+    if (videoIntroStart) {
+      videoIntroStart.src = introBlob || introStartUrl;
     }
 
     // Iniciar reproducción del loop
@@ -384,15 +404,34 @@ import { STORY_SECTIONS, INTRO_MEDIA } from '../config/story';
     const textSpan = target.querySelector('.ti-text') as HTMLElement | null;
     if (!textSpan) return;
 
-    // Rango de tipeo dentro del mundo: desde el 4% hasta el 82% del avance del mundo
-    // Al superar el 82% queda 100% tipeado para que el lector lo disfrute completo antes de cambiar de mundo
-    const ratio = Math.min(1, Math.max(0, (worldProgress - 0.04) / 0.78));
+    // Rango de tipeo dentro del mundo: desde el 4% hasta el umbral
+    // En el último mundo concluye al 16% del tramo para que el texto completo quede disponible durante más del 84% restante del scroll
+    const endRatio = worldIdx === STORY_SECTIONS.length - 1 ? 0.16 : 0.75;
+    const ratio = Math.min(1, Math.max(0, (worldProgress - 0.04) / (endRatio - 0.04)));
     const targetLength = Math.round(ratio * fullQuote.length);
 
     // Escribir hacia adelante o retrasar/borrar hacia atrás según la posición exacta del scroll
     const currentLength = textSpan.textContent?.length || 0;
     if (currentLength !== targetLength) {
       textSpan.textContent = fullQuote.slice(0, targetLength);
+
+      // Desplazar automáticamente hacia abajo a medida que se escribe solo si excede la altura visible
+      const scrollBox = target.closest('.text-reveal-scroll') as HTMLElement | null;
+      if (scrollBox) {
+        const maxScroll = scrollBox.scrollHeight - scrollBox.clientHeight;
+        if (maxScroll > 10) {
+          scrollBox.scrollTop = maxScroll;
+        } else {
+          scrollBox.scrollTop = 0;
+        }
+
+        // Solo desvanecer arriba si tiene scroll activo y se ha desplazado hacia abajo
+        if (maxScroll > 10 && scrollBox.scrollTop > 14) {
+          scrollBox.classList.add('is-scrolled');
+        } else {
+          scrollBox.classList.remove('is-scrolled');
+        }
+      }
     }
   }
 
@@ -401,6 +440,11 @@ import { STORY_SECTIONS, INTRO_MEDIA } from '../config/story';
       const target = document.getElementById(`typeit-quote-${idx}`);
       const textSpan = target?.querySelector('.ti-text') as HTMLElement | null;
       if (textSpan) textSpan.textContent = '';
+      const scrollBox = target?.closest('.text-reveal-scroll') as HTMLElement | null;
+      if (scrollBox) {
+        scrollBox.scrollTop = 0;
+        scrollBox.classList.remove('is-scrolled');
+      }
     });
   }
 
@@ -427,6 +471,11 @@ import { STORY_SECTIONS, INTRO_MEDIA } from '../config/story';
         el.style.opacity = '1';
         el.style.transform = 'translateY(0)';
         el.style.pointerEvents = 'auto';
+        const scrollBox = targetQuote?.closest('.text-reveal-scroll') as HTMLElement | null;
+        if (scrollBox && (!textSpan?.textContent || textSpan.textContent.length === 0)) {
+          scrollBox.scrollTop = 0;
+          scrollBox.classList.remove('is-scrolled');
+        }
       } else if (idx < worldIdx) {
         el.style.opacity = '0';
         el.style.transform = 'translateY(-16px)';
@@ -448,7 +497,10 @@ import { STORY_SECTIONS, INTRO_MEDIA } from '../config/story';
   // Manejar el progreso continuo del scroll: sincronización bidireccional del texto y overlay
   function handleProgress(rawProgress: number, activeWorldIdx: number, worldProgress: number) {
     if (cinemaBottomOverlay && isIntroTransitionActive) {
-      if (rawProgress >= 0.98) {
+      const maxScroll = getMaxStoryScroll();
+      // El texto permanece visible durante todo el recorrido del último mundo.
+      // Solo comienza a desvanecerse suavemente al aproximarse al epílogo final cuando sobrepasa la pista
+      if (window.scrollY >= maxScroll - 15) {
         cinemaBottomOverlay.style.opacity = '0';
         cinemaBottomOverlay.style.pointerEvents = 'none';
       } else {
@@ -461,21 +513,29 @@ import { STORY_SECTIONS, INTRO_MEDIA } from '../config/story';
     if (isIntroTransitionActive) {
       updateTypewriterProgress(activeWorldIdx, worldProgress);
 
-      // Gestión de la barrera de detención por mundo y revelado del CTA "Siguiente Mundo"
+      // Si auto-scroll está activo y el último mundo termina de tipear su mensaje, pausar automáticamente para dar tiempo de lectura
+      if (activeWorldIdx === STORY_SECTIONS.length - 1 && worldProgress >= 0.18 && !hasPausedForWorld5Reading) {
+        hasPausedForWorld5Reading = true;
+        if (autoscroll.getIsRunning()) {
+          autoscroll.pauseAndStartCountdown(18000); // 18 segundos de pausa serena de lectura
+        }
+      }
+
+      // Gestión de la barrera de detención por mundo y revelado del CTA "Siguiente Mundo" (mundos 0 a 3)
       if (unlockedWorldIndex < STORY_SECTIONS.length - 1) {
         const stopProgress = getWorldStopProgress(unlockedWorldIndex);
         const maxScroll = getMaxStoryScroll();
         const maxAllowedScrollY = Math.round(stopProgress * maxScroll);
         const currentBtn = document.getElementById(`btn-next-world-${unlockedWorldIndex}`) as HTMLElement | null;
 
-        // Mostrar botón cuando el mundo actual esté concluyendo su narrativa (>= 78%)
-        if (activeWorldIdx === unlockedWorldIndex && worldProgress >= 0.78) {
+        // Mostrar botón cuando el mundo actual esté concluyendo su narrativa (>= 75%)
+        if (activeWorldIdx === unlockedWorldIndex && worldProgress >= 0.75) {
           if (currentBtn) {
             currentBtn.style.opacity = '1';
             currentBtn.style.pointerEvents = 'auto';
             currentBtn.style.transform = 'translateY(0)';
           }
-        } else if (activeWorldIdx === unlockedWorldIndex && worldProgress < 0.72) {
+        } else if (activeWorldIdx === unlockedWorldIndex && worldProgress < 0.69) {
           if (currentBtn) {
             currentBtn.style.opacity = '0';
             currentBtn.style.pointerEvents = 'none';
@@ -512,8 +572,9 @@ import { STORY_SECTIONS, INTRO_MEDIA } from '../config/story';
       const clips = sec.clips || [];
 
       if (clips.length > 0) {
-        // Los clips concluyen al 90% del tramo para que en el punto de parada (94%) el video se mantenga sereno en su frame culminante
-        const clipsSpanDuration = spanDuration * 0.90;
+        // En el último mundo, el video culmina temprano (al 22% del tramo) para que el fotograma final quede sereno de fondo mientras se lee todo el texto
+        const clipFactor = sIdx === STORY_SECTIONS.length - 1 ? 0.22 : 0.90;
+        const clipsSpanDuration = spanDuration * clipFactor;
         const clipSlice = clipsSpanDuration / clips.length;
         clips.forEach((clipUrl, cIdx) => {
           clipItems.push({
@@ -669,9 +730,145 @@ import { STORY_SECTIONS, INTRO_MEDIA } from '../config/story';
     });
   }
 
-  // Listener de scroll para el motor
+  // ============================================================================
+  // Fuegos Artificiales / Confetti Detrás del Card Final (Epílogo)
+  // ============================================================================
+  let confettiInstance: confetti.CreateTypes | null = null;
+  if (confettiCanvas) {
+    confettiInstance = confetti.create(confettiCanvas, {
+      resize: true,
+      useWorker: false,
+    });
+  }
+
+  let fireworksTimer: number | null = null;
+  let isFireworksRunning = false;
+
+  function getEpilogueCardBounds() {
+    if (!epilogueCard) {
+      return { minX: 0.35, maxX: 0.65, minY: 0.35, maxY: 0.65 };
+    }
+    const rect = epilogueCard.getBoundingClientRect();
+    const vw = Math.max(1, window.innerWidth);
+    const vh = Math.max(1, window.innerHeight);
+
+    // Coordenadas calculadas detrás del cuerpo del card
+    const minX = Math.max(0.05, Math.min(0.95, (rect.left + rect.width * 0.15) / vw));
+    const maxX = Math.max(0.05, Math.min(0.95, (rect.right - rect.width * 0.15) / vw));
+    const minY = Math.max(0.05, Math.min(0.95, (rect.top + rect.height * 0.2) / vh));
+    const maxY = Math.max(0.05, Math.min(0.95, (rect.bottom - rect.height * 0.2) / vh));
+
+    return { minX, maxX, minY, maxY };
+  }
+
+  function launchFireworkBurst() {
+    if (!confettiInstance) return;
+
+    const bounds = getEpilogueCardBounds();
+    const originX = bounds.minX + Math.random() * (bounds.maxX - bounds.minX);
+    const originY = bounds.minY + Math.random() * (bounds.maxY - bounds.minY);
+
+    const palettes = [
+      ['#d4af37', '#f59e0b', '#fbbf24', '#fef08a', '#ffffff'], // Oro estelar
+      ['#f43f5e', '#ec4899', '#fda4af', '#f472b6', '#ffffff'], // Rosa romance
+      ['#38bdf8', '#818cf8', '#60a5fa', '#c084fc', '#ffffff'], // Azul cósmico
+      ['#eab308', '#ec4899', '#a855f7', '#38bdf8', '#ffffff'], // Mágico multicolor
+      ['#34d399', '#6ee7b7', '#10b981', '#fef08a', '#ffffff'], // Esmeralda / aurora
+    ];
+    const colors = palettes[Math.floor(Math.random() * palettes.length)];
+
+    const particleCount = isMobile
+      ? 28 + Math.floor(Math.random() * 20)
+      : 45 + Math.floor(Math.random() * 30);
+
+    confettiInstance({
+      particleCount,
+      spread: 360,
+      startVelocity: isMobile ? 32 + Math.random() * 16 : 42 + Math.random() * 22,
+      decay: 0.91,
+      gravity: 0.65,
+      ticks: 180 + Math.floor(Math.random() * 60),
+      scalar: 0.85 + Math.random() * 0.45,
+      origin: { x: originX, y: originY },
+      colors,
+      shapes: ['circle', 'square', 'star'],
+      disableForReducedMotion: true,
+    });
+  }
+
+  function startFireworks() {
+    if (isFireworksRunning || !confettiInstance || !confettiCanvas) return;
+    isFireworksRunning = true;
+    confettiCanvas.style.opacity = '1';
+
+    // Ráfagas iniciales detonando detrás del card
+    launchFireworkBurst();
+    setTimeout(() => { if (isFireworksRunning) launchFireworkBurst(); }, 120);
+    setTimeout(() => { if (isFireworksRunning) launchFireworkBurst(); }, 250);
+
+    // Explosiones continuas de fuegos artificiales mientras permanezca al final
+    fireworksTimer = window.setInterval(() => {
+      if (!isFireworksRunning) return;
+      launchFireworkBurst();
+      if (Math.random() > 0.4) {
+        setTimeout(() => {
+          if (isFireworksRunning) launchFireworkBurst();
+        }, 130);
+      }
+    }, 450);
+  }
+
+  function stopFireworks() {
+    if (!isFireworksRunning && fireworksTimer === null) return;
+    isFireworksRunning = false;
+
+    if (fireworksTimer !== null) {
+      clearInterval(fireworksTimer);
+      fireworksTimer = null;
+    }
+
+    if (confettiInstance) {
+      confettiInstance.reset();
+    }
+
+    if (confettiCanvas) {
+      confettiCanvas.style.opacity = '0';
+      const ctx = confettiCanvas.getContext('2d');
+      ctx?.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+    }
+  }
+
+  function checkEpilogueScroll() {
+    if (!isIntroTransitionActive) {
+      if (isFireworksRunning) stopFireworks();
+      return;
+    }
+
+    const scrollY = window.scrollY;
+    const maxScroll = Math.max(1, document.documentElement.scrollHeight - window.innerHeight);
+    const distanceToBottom = maxScroll - scrollY;
+
+    // Cuando se llega al final de la página (a menos de 100px del tope inferior)
+    if (distanceToBottom <= 100) {
+      if (!isFireworksRunning) {
+        startFireworks();
+      }
+    } else if (distanceToBottom > 200) {
+      // Al hacer scroll hacia arriba, desaparece por completo
+      if (isFireworksRunning) {
+        stopFireworks();
+      }
+    }
+  }
+
+  // Listener de scroll para el motor y fuegos artificiales del epílogo
   window.addEventListener('scroll', () => {
     worldEngine?.update();
+    checkEpilogueScroll();
+  }, { passive: true });
+
+  window.addEventListener('resize', () => {
+    checkEpilogueScroll();
   }, { passive: true });
 
   // Frenar scroll manual (rueda / touchpad) al punto de parada del mundo actual antes de hacer clic en el CTA
@@ -683,6 +880,12 @@ import { STORY_SECTIONS, INTRO_MEDIA } from '../config/story';
     const maxAllowedScrollY = Math.round(stopProgress * maxScroll);
 
     if (window.scrollY >= maxAllowedScrollY - 2 && e.deltaY > 0) {
+      // Si el evento ocurre sobre un panel de texto que aún puede scrollear hacia abajo, permitir su scroll interno
+      const targetEl = e.target as HTMLElement | null;
+      const scrollBox = targetEl?.closest('.text-reveal-scroll') as HTMLElement | null;
+      if (scrollBox && scrollBox.scrollTop < scrollBox.scrollHeight - scrollBox.clientHeight - 2) {
+        return;
+      }
       e.preventDefault();
       window.scrollTo({ top: maxAllowedScrollY, behavior: 'instant' });
       autoscroll.pauseForWorldCTA();
@@ -707,6 +910,12 @@ import { STORY_SECTIONS, INTRO_MEDIA } from '../config/story';
     const isScrollingDown = currentY < touchStartY;
 
     if (window.scrollY >= maxAllowedScrollY - 2 && isScrollingDown) {
+      // Si el desplazamiento táctil ocurre dentro del contenedor de texto y puede scrollear hacia abajo, permitirlo
+      const targetEl = e.target as HTMLElement | null;
+      const scrollBox = targetEl?.closest('.text-reveal-scroll') as HTMLElement | null;
+      if (scrollBox && scrollBox.scrollTop < scrollBox.scrollHeight - scrollBox.clientHeight - 2) {
+        return;
+      }
       e.preventDefault();
       window.scrollTo({ top: maxAllowedScrollY, behavior: 'instant' });
       autoscroll.pauseForWorldCTA();
@@ -771,6 +980,9 @@ import { STORY_SECTIONS, INTRO_MEDIA } from '../config/story';
       if (cinemaBottomOverlay) cinemaBottomOverlay.style.opacity = '0';
       if (epilogue) epilogue.classList.add('hidden');
 
+      // Detener fuegos artificiales de inmediato
+      stopFireworks();
+
       // Detener y resetear auto-scroll
       autoscroll.stop();
 
@@ -809,6 +1021,7 @@ import { STORY_SECTIONS, INTRO_MEDIA } from '../config/story';
       audio.stopAll();
       isIntroTransitionActive = false;
       unlockedWorldIndex = 0;
+      hasPausedForWorld5Reading = false;
       document.querySelectorAll('.btn-next-world').forEach((b) => {
         const el = b as HTMLElement;
         el.style.opacity = '0';

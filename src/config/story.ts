@@ -72,8 +72,8 @@ export const STORY_ACTS: StoryAct[] = [
   {
     id: 'act-3',
     title: 'Acto III',
-    subtitle: 'El Principio del Manana',
-    description: 'El salto hacia el porvenir, los suenos por florecer, la partida a Espana y el destino compartido.',
+    subtitle: 'El Principio del Mañana',
+    description: 'El salto hacia el porvenir, los suenos por florecer y el destino compartido.',
     audioTrack: resolveMediaUrl('/audio/act_3.mp3')
   }
 ];
@@ -92,10 +92,10 @@ export const STORY_SECTIONS: StorySection[] = [
     ],
     clipMobile: resolveMediaUrl('/mobile/world_1.mp4'),
     audioTrack: resolveMediaUrl('/audio/world_1.mp3'),
-    accent: '#d4af37',
+    accent: '#fff',
     alignment: 'left',
     linger: 0.45,
-    scroll: 30
+    scroll: 20
   },
   {
     id: 'world-2',
@@ -110,10 +110,10 @@ export const STORY_SECTIONS: StorySection[] = [
     ],
     clipMobile: resolveMediaUrl('/mobile/world_2.mp4'),
     audioTrack: resolveMediaUrl('/audio/world_2.mp3'),
-    accent: '#e26d5c',
+    accent: '#fff',
     alignment: 'right',
     linger: 0.45,
-    scroll: 25
+    scroll: 20
   },
   {
     id: 'world-3',
@@ -126,39 +126,41 @@ export const STORY_SECTIONS: StorySection[] = [
     clips: [resolveMediaUrl('/desktop/world_3.mp4')],
     clipMobile: resolveMediaUrl('/mobile/world_3.mp4'),
     audioTrack: resolveMediaUrl('/audio/world_3.mp3'),
-    accent: '#f39c12',
+    accent: '#fff',
     alignment: 'left',
     linger: 0.45,
-    scroll: 20
+    scroll: 25
   },
   {
     id: 'world-4',
     actId: 'act-3',
     actTitle: 'Acto III',
-    actSubtitle: 'El Principio del Manana',
+    actSubtitle: 'El Principio del Mañana',
     worldNumber: 4,
-    title: 'Mundo 4: El Valle de los Cerezos y el Zorro de la Aurora',
-    quote: 'Caminando en linea recta no puede uno llegar muy lejos... pero si miras hacia el horizonte, hacia los atardeceres dorados de un desierto lejano o los campos de cerezos que suenan con Japon, sabras que lo mejor de nuestra historia apenas comienza. Iremos a Espana tomados de la mano, con nuestra amada Venus guiando el camino, porque domesticar un corazon significa que seremos el refugio del otro por siempre y para siempre.',
-    clips: [],
+    title: 'El horizonte de sueños',
+    quote: 'Caminando en linea recta no puede uno llegar muy lejos... pero si miras hacia el horizonte, hacia los atardeceres dorados o los campos de cerezos notaras que el mundo espera por ser descubierto, que lo mejor de nuestra historia apenas comienza.',
+    clips: [resolveMediaUrl('/desktop/world_4.mp4')],
+    clipMobile: resolveMediaUrl('/mobile/world_4.mp4'),
     audioTrack: resolveMediaUrl('/audio/world_4.mp3'),
-    accent: '#f8a5c2',
+    accent: '#fff',
     alignment: 'left',
     linger: 0.45,
-    scroll: 13
+    scroll: 25
   },
   {
     id: 'world-5',
     actId: 'act-3',
     actTitle: 'Acto III',
-    actSubtitle: 'El Principio del Manana',
+    actSubtitle: 'El Principio del Mañana',
     worldNumber: 5,
-    title: 'Mundo 5: La Ciudad de los Ecos Estelares',
+    title: 'La ciudad de los ecos estelares',
     quote: 'Al final, las historias mas hermosas no son las que no tienen tormentas, sino aquellas donde dos caminantes descubren que su brujula son los ojos del otro. Este no es el final del camino, sino el portal hacia todos los universos que nos quedan por habitar juntos.',
-    clips: [],
+    clips: [resolveMediaUrl('/desktop/world_5.mp4')],
+    clipMobile: resolveMediaUrl('/mobile/world_5.mp4'),
     audioTrack: resolveMediaUrl('/audio/world_5.mp3'),
-    accent: '#70a1ff',
+    accent: '#fff',
     alignment: 'left',
     linger: 0.45,
-    scroll: 12
+    scroll: 60 
   }
 ];

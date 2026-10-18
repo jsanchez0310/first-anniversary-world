@@ -21,29 +21,128 @@ const isColumnLayout = alignment === "left" || alignment === "right";
 ---
 
 <div
-  class={`text-reveal-container my-1.5 sm:my-2.5 w-full ${className}`}
+  class={`text-reveal-container my-1.5 sm:my-2.5 w-full relative ${className}`}
   data-text-reveal
+  data-world-index={worldIndex}
 >
-  <blockquote
-    class={`${textOrientationMap[alignment] || 'text-left'} font-normal leading-relaxed text-zinc-100/95 tracking-wide select-none drop-shadow-[0_2px_12px_rgba(0,0,0,0.95)] ${
-      isColumnLayout
-        ? "text-sm sm:text-[15px] md:text-[15px] lg:text-[16px] min-h-[5.5rem] sm:min-h-[7.5rem]"
-        : "text-sm sm:text-base md:text-lg lg:text-xl min-h-[4rem] sm:min-h-[5.5rem]"
-    }`}
+  <!-- Contenedor dinámico que se expande todo lo que pueda sin altura fija -->
+  <div
+    id={`text-reveal-scroll-${worldIndex}`}
+    class="text-reveal-scroll relative w-full overflow-y-auto overscroll-contain pt-2 sm:pt-3 pb-2 pr-1.5 sm:pr-2.5 pointer-events-auto"
   >
-    <!-- Contenedor Typewriter limpio sin cursor -->
-    <span
-      id={`typeit-quote-${worldIndex}`}
-      class="typeit-quote-element drop-shadow-[0_2px_12px_rgba(0,0,0,0.95)] inline font-body"
-      data-quote={quote}
-      data-world-idx={worldIndex}><span class="ti-text"></span></span
+    <blockquote
+      class={`${textOrientationMap[alignment] || 'text-left'} font-normal leading-relaxed text-zinc-100/95 tracking-wide select-none drop-shadow-[0_2px_12px_rgba(0,0,0,0.95)] ${
+        isColumnLayout
+          ? "text-xs sm:text-sm md:text-[15px] lg:text-[16px]"
+          : "text-xs sm:text-sm md:text-lg lg:text-xl"
+      }`}
     >
-  </blockquote>
+      <!-- Contenedor Typewriter limpio sin cursor -->
+      <span
+        id={`typeit-quote-${worldIndex}`}
+        class="typeit-quote-element drop-shadow-[0_2px_12px_rgba(0,0,0,0.95)] inline font-body"
+        data-quote={quote}
+        data-world-idx={worldIndex}
+      ><span class="ti-text"></span></span>
+    </blockquote>
+  </div>
 </div>
 
 <style>
   .typeit-quote-element {
     color: #fff;
-    text-shadow: 0 0 24px rgba(255, 255, 255, 0.3);
+    text-shadow: 0 0 24px rgba(255, 255, 255, 0.4);
+  }
+
+  /* Contenedor scrolleable: se expande libremente según el contenido sin altura fija */
+  .text-reveal-scroll {
+    height: auto;
+    max-height: 55vh;
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE y Edge */
+    -webkit-overflow-scrolling: touch;
+    -webkit-mask-image: none;
+    mask-image: none;
+    transition: -webkit-mask-image 0.2s ease, mask-image 0.2s ease;
+  }
+
+  @media (min-width: 640px) {
+    .text-reveal-scroll {
+      max-height: 62vh;
+    }
+  }
+
+  @media (min-width: 768px) {
+    .text-reveal-scroll {
+      max-height: 68vh;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .text-reveal-scroll {
+      max-height: calc(100vh - 220px);
+    }
+  }
+
+  /* ÚNICAMENTE cuando el contenedor realmente desborda y se ha desplazado hacia abajo */
+  .text-reveal-scroll.is-scrolled {
+    -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 22px, black 100%);
+    mask-image: linear-gradient(to bottom, transparent 0%, black 22px, black 100%);
+  }
+
+  /* Ocultar barra de scroll en navegadores basados en WebKit (Chrome, Safari, Opera, iOS) */
+  .text-reveal-scroll::-webkit-scrollbar {
+    display: none;
+    width: 0;
+    height: 0;
   }
 </style>
+
+<script>
+  function initTextRevealScroll() {
+    const scrollContainers = document.querySelectorAll<HTMLElement>('.text-reveal-scroll');
+    scrollContainers.forEach((container) => {
+      if (container.dataset.scrollInitialized === 'true') return;
+      container.dataset.scrollInitialized = 'true';
+
+      const updateMask = () => {
+        // Solo desvanecer si el texto realmente desborda el contenedor y se ha scrolleado hacia abajo
+        const hasRealOverflow = container.scrollHeight > container.clientHeight + 8;
+        const isScrolledDown = container.scrollTop > 14;
+        if (hasRealOverflow && isScrolledDown) {
+          container.classList.add('is-scrolled');
+        } else {
+          container.classList.remove('is-scrolled');
+        }
+      };
+
+      container.addEventListener('scroll', updateMask, { passive: true });
+
+      const textSpan = container.querySelector<HTMLElement>('.ti-text');
+      if (textSpan) {
+        const observer = new MutationObserver(() => {
+          const maxScroll = container.scrollHeight - container.clientHeight;
+          // Solo desplazamos si el texto realmente excede la altura máxima disponible
+          if (maxScroll > 10) {
+            container.scrollTop = maxScroll;
+          } else {
+            container.scrollTop = 0;
+          }
+          updateMask();
+        });
+
+        observer.observe(textSpan, {
+          childList: true,
+          characterData: true,
+          subtree: true,
+        });
+      }
+    });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initTextRevealScroll);
+  } else {
+    initTextRevealScroll();
+  }
+</script>

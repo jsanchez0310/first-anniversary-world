@@ -3,19 +3,19 @@
 ---
 
 <!-- HUD Superior Derecho: Botones de Auto-Scroll y Sonido -->
-<div class="fixed top-6 right-6 z-50 pointer-events-auto flex items-center gap-2.5">
+<div class="fixed top-6 right-6 z-[10000] pointer-events-auto flex items-center gap-2.5">
   <!-- Boton de Auto-Scroll -->
   <button 
     id="autoscroll-toggle-btn" 
     class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-black/50 hover:bg-black/75 border border-[#272727]/80 text-zinc-300 hover:text-[#d4af37] text-xs backdrop-blur-md transition-all duration-300 active:scale-95 shadow-xl cursor-pointer"
     aria-label="Alternar Auto-Scroll"
   >
-    <span class="flex items-center justify-center w-3 h-3 text-[#d4af37]">
-      <svg id="autoscroll-play-icon" class="w-3 h-3 text-[#d4af37]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <span id="autoscroll-icon-wrap" class="flex items-center justify-center w-3 h-3 text-zinc-500">
+      <svg id="autoscroll-play-icon" class="w-3 h-3 text-zinc-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
       </svg>
     </span>
-    <span id="autoscroll-label" class="font-mono text-[10px] tracking-wider text-[#d4af37]">AUTO-SCROLL ON</span>
+    <span id="autoscroll-label" class="font-mono text-[10px] tracking-wider text-zinc-500">AUTO-SCROLL OFF</span>
   </button>
 
   <!-- Boton de Sonido -->
@@ -184,7 +184,8 @@
   const countdownBar = document.getElementById('autoscroll-countdown-bar');
 
   if (autoscrollToggleBtn) {
-    autoscrollToggleBtn.addEventListener('click', () => {
+    autoscrollToggleBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
       const isEnabled = autoscroll.toggle();
       updateAutoScrollUI(isEnabled);
     });
@@ -192,7 +193,7 @@
 
   autoscroll.subscribe((state) => {
     updateAutoScrollUI(state.isEnabled);
-    if (!state.isPaused) {
+    if (!state.isPaused || !state.isEnabled) {
       hideCountdown();
     }
   });
@@ -212,6 +213,10 @@
     }
     if (autoscrollPlayIcon) {
       autoscrollPlayIcon.setAttribute('class', `w-3 h-3 ${isEnabled ? 'text-[#d4af37]' : 'text-zinc-500'}`);
+    }
+    const iconWrap = document.getElementById('autoscroll-icon-wrap');
+    if (iconWrap) {
+      iconWrap.className = `flex items-center justify-center w-3 h-3 ${isEnabled ? 'text-[#d4af37]' : 'text-zinc-500'}`;
     }
   }
 

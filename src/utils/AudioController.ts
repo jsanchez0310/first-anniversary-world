@@ -4,6 +4,12 @@
  * limpias y exclusivas entre pistas por Acto o Mundo, garantizando que NUNCA
  * se superpongan múltiples pistas de audio.
  */
+declare global {
+  interface Window {
+    __audioControllerInstance?: AudioController;
+  }
+}
+
 export class AudioController {
   private static instance: AudioController | null = null;
   private currentAudio: HTMLAudioElement | null = null;
@@ -38,6 +44,12 @@ export class AudioController {
   }
 
   public static getInstance(): AudioController {
+    if (typeof window !== 'undefined') {
+      if (!window.__audioControllerInstance) {
+        window.__audioControllerInstance = new AudioController();
+      }
+      return window.__audioControllerInstance;
+    }
     if (!AudioController.instance) {
       AudioController.instance = new AudioController();
     }
